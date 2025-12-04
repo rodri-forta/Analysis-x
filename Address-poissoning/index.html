@@ -1,1 +1,1224 @@
--
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Address Poisoning Attack Analysis | Ethereum Mainnet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --forta-green: #00ffd5;
+            --forta-cyan: #4cd2ff;
+            --forta-blue: #4d65ff;
+            --forta-dark: #05161A;
+            --forta-darker: #020c0f;
+            --forta-card: rgba(255, 255, 255, 0.03);
+            --forta-border: rgba(0, 255, 213, 0.15);
+            --gradient-accent: linear-gradient(90deg, #00ffd5, #4cd2ff);
+            --gradient-danger: linear-gradient(135deg, #ff4d6a, #ff8c4d);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--forta-darker);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated background grid */
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                linear-gradient(rgba(0, 255, 213, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 213, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Spotlight effect */
+        .spotlight {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse 800px 600px at var(--mouse-x, 50%) var(--mouse-y, 30%),
+                rgba(0, 255, 213, 0.08) 0%,
+                rgba(77, 101, 255, 0.03) 40%,
+                transparent 70%);
+            pointer-events: none;
+            z-index: 1;
+            transition: background 0.3s ease;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 4rem;
+            position: relative;
+        }
+
+        .forta-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--forta-card);
+            border: 1px solid var(--forta-border);
+            padding: 0.5rem 1rem;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--forta-green);
+            margin-bottom: 1.5rem;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .forta-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--forta-green);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .header h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .header h1 span {
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .network-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, rgba(77, 101, 255, 0.2), rgba(0, 255, 213, 0.1));
+            border: 1px solid rgba(77, 101, 255, 0.3);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+
+        .network-tag svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 4rem;
+        }
+
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            background: var(--forta-card);
+            border: 1px solid var(--forta-border);
+            border-radius: 16px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.8s ease-out both;
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-accent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(0, 255, 213, 0.3);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+
+        .stat-card.danger::before {
+            background: var(--gradient-danger);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value.gradient {
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-value.danger {
+            color: #ff4d6a;
+        }
+
+        .stat-change {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Main Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        @media (max-width: 900px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--forta-card);
+            border: 1px solid var(--forta-border);
+            border-radius: 20px;
+            padding: 2rem;
+            animation: fadeInUp 0.8s ease-out 0.5s both;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+
+        .panel-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .panel-title-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, rgba(0, 255, 213, 0.2), rgba(77, 101, 255, 0.1));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .panel-title-icon svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--forta-green);
+        }
+
+        /* Attack Types Chart */
+        .attack-types {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .attack-type {
+            position: relative;
+        }
+
+        .attack-type-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .attack-type-name {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .attack-type-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .attack-type-dot.zero { background: #4cd2ff; }
+        .attack-type-dot.tiny { background: #00ffd5; }
+        .attack-type-dot.counterfeit { background: #ff4d6a; }
+
+        .attack-type-stats {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .attack-type-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .attack-type-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .attack-type-fill.zero { background: linear-gradient(90deg, #4cd2ff, #4d65ff); }
+        .attack-type-fill.tiny { background: linear-gradient(90deg, #00ffd5, #4cd2ff); }
+        .attack-type-fill.counterfeit { background: linear-gradient(90deg, #ff4d6a, #ff8c4d); }
+
+        /* Financial Impact */
+        .impact-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .impact-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .impact-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .impact-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .impact-icon.zero { background: linear-gradient(135deg, rgba(76, 210, 255, 0.2), rgba(77, 101, 255, 0.1)); }
+        .impact-icon.tiny { background: linear-gradient(135deg, rgba(0, 255, 213, 0.2), rgba(76, 210, 255, 0.1)); }
+        .impact-icon.counterfeit { background: linear-gradient(135deg, rgba(255, 77, 106, 0.2), rgba(255, 140, 77, 0.1)); }
+
+        .impact-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .impact-content {
+            flex: 1;
+        }
+
+        .impact-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .impact-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .impact-value.danger {
+            color: #ff4d6a;
+        }
+
+        .impact-percent {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Attempts vs Success Section */
+        .effectiveness-section {
+            margin-top: 4rem;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+
+        .effectiveness-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .effectiveness-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .attempts-panel {
+            background: linear-gradient(135deg, rgba(77, 101, 255, 0.1), rgba(0, 255, 213, 0.05));
+            border: 1px solid rgba(77, 101, 255, 0.3);
+            border-radius: 20px;
+            padding: 2rem;
+        }
+
+        .attempts-total {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--forta-border);
+        }
+
+        .attempts-total-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .attempts-total-value {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #4cd2ff, #4d65ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .attempts-total-sub {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .attempt-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .attempt-row:last-child {
+            border-bottom: none;
+        }
+
+        .attempt-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .attempt-info {
+            flex: 1;
+        }
+
+        .attempt-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .attempt-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .attempt-percent {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        /* Insights Panel */
+        .insights-panel {
+            background: linear-gradient(135deg, rgba(255, 77, 106, 0.1), rgba(255, 140, 77, 0.05));
+            border: 1px solid rgba(255, 77, 106, 0.3);
+            border-radius: 20px;
+            padding: 2rem;
+        }
+
+        .insight-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            border-left: 3px solid;
+        }
+
+        .insight-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .insight-card.warning {
+            border-left-color: #ff8c4d;
+        }
+
+        .insight-card.success {
+            border-left-color: #00ffd5;
+        }
+
+        .insight-card.info {
+            border-left-color: #4cd2ff;
+        }
+
+        .insight-icon {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .insight-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .insight-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .insight-highlight {
+            color: var(--forta-green);
+            font-weight: 600;
+        }
+
+        /* Comparison Bar */
+        .comparison-bars {
+            margin-top: 2rem;
+        }
+
+        .comparison-item {
+            margin-bottom: 1.5rem;
+        }
+
+        .comparison-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .comparison-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .comparison-label {
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .comparison-values {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .comparison-bar-container {
+            display: flex;
+            gap: 4px;
+            height: 24px;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .comparison-bar-attempts {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-muted);
+            transition: all 0.5s ease;
+        }
+
+        .comparison-bar-success {
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--forta-dark);
+            font-weight: 600;
+            transition: all 0.5s ease;
+        }
+
+        .comparison-bar-success.zero { background: linear-gradient(90deg, #4cd2ff, #4d65ff); }
+        .comparison-bar-success.tiny { background: linear-gradient(90deg, #00ffd5, #4cd2ff); }
+        .comparison-bar-success.counterfeit { background: linear-gradient(90deg, #ff4d6a, #ff8c4d); }
+
+        /* How It Works Section */
+        .how-it-works {
+            margin-top: 4rem;
+            animation: fadeInUp 0.8s ease-out 0.7s both;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        .section-header p {
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .attack-flow {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            position: relative;
+        }
+
+        @media (max-width: 900px) {
+            .attack-flow {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .attack-flow {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .flow-step {
+            background: var(--forta-card);
+            border: 1px solid var(--forta-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .flow-step:hover {
+            transform: translateY(-4px);
+            border-color: rgba(0, 255, 213, 0.3);
+        }
+
+        .flow-step-number {
+            width: 32px;
+            height: 32px;
+            background: var(--gradient-accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+            color: var(--forta-dark);
+            margin-bottom: 1rem;
+        }
+
+        .flow-step h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .flow-step p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .flow-step.danger .flow-step-number {
+            background: var(--gradient-danger);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 3rem 0;
+            border-top: 1px solid var(--forta-border);
+            margin-top: 4rem;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer-logo svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .footer-logo span {
+            font-weight: 600;
+            font-size: 1.125rem;
+        }
+
+        .footer p {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .footer a {
+            color: var(--forta-green);
+            text-decoration: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .footer a:hover {
+            opacity: 0.8;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--forta-darker);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 213, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 213, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="spotlight"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="forta-badge">
+                Forta Network Security Report
+            </div>
+            <h1>Address <span>Poisoning</span> Attacks</h1>
+            <p class="subtitle">Real-time analysis of address poisoning attack vectors targeting Ethereum mainnet wallets</p>
+            <div class="network-tag">
+                <svg viewBox="0 0 256 417" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M127.961 0L125.166 9.5V285.168L127.961 287.958L255.923 212.32L127.961 0Z" fill="#687DE3"/>
+                    <path d="M127.962 0L0 212.32L127.962 287.959V154.158V0Z" fill="#9FB1F1"/>
+                    <path d="M127.961 312.187L126.386 314.107V412.306L127.961 416.905L255.999 236.587L127.961 312.187Z" fill="#687DE3"/>
+                    <path d="M127.962 416.905V312.187L0 236.587L127.962 416.905Z" fill="#9FB1F1"/>
+                </svg>
+                Ethereum Mainnet
+            </div>
+        </header>
+
+        <!-- Key Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Cases Analyzed</div>
+                <div class="stat-value gradient">153</div>
+                <div class="stat-change">Poisoning attack cases</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Attack Transactions</div>
+                <div class="stat-value gradient">444</div>
+                <div class="stat-change">Individual transfers tracked</div>
+            </div>
+            <div class="stat-card danger">
+                <div class="stat-label">Total Value Stolen</div>
+                <div class="stat-value danger">$3.56M</div>
+                <div class="stat-change">USD equivalent losses</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg. Loss per Case</div>
+                <div class="stat-value danger">$23.2K</div>
+                <div class="stat-change">Mean victim loss</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-grid">
+            <!-- Attack Types Distribution -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <div class="panel-title-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                        </div>
+                        Attack Vector Distribution
+                    </div>
+                </div>
+                <div class="attack-types">
+                    <div class="attack-type">
+                        <div class="attack-type-header">
+                            <div class="attack-type-name">
+                                <span class="attack-type-dot zero"></span>
+                                Zero-value Transfer
+                            </div>
+                            <div class="attack-type-stats">77 cases · 50.33%</div>
+                        </div>
+                        <div class="attack-type-bar">
+                            <div class="attack-type-fill zero" style="width: 50.33%"></div>
+                        </div>
+                    </div>
+                    <div class="attack-type">
+                        <div class="attack-type-header">
+                            <div class="attack-type-name">
+                                <span class="attack-type-dot tiny"></span>
+                                Dust Transfer
+                            </div>
+                            <div class="attack-type-stats">57 cases · 37.25%</div>
+                        </div>
+                        <div class="attack-type-bar">
+                            <div class="attack-type-fill tiny" style="width: 37.25%"></div>
+                        </div>
+                    </div>
+                    <div class="attack-type">
+                        <div class="attack-type-header">
+                            <div class="attack-type-name">
+                                <span class="attack-type-dot counterfeit"></span>
+                                Fake Token Transfer
+                            </div>
+                            <div class="attack-type-stats">19 cases · 12.42%</div>
+                        </div>
+                        <div class="attack-type-bar">
+                            <div class="attack-type-fill counterfeit" style="width: 12.42%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Impact -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <div class="panel-title-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        Financial Impact by Type
+                    </div>
+                </div>
+                <div class="impact-breakdown">
+                    <div class="impact-item">
+                        <div class="impact-icon tiny">
+                            <svg fill="none" stroke="#00ffd5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
+                            </svg>
+                        </div>
+                        <div class="impact-content">
+                            <div class="impact-label">Dust Transfer Attacks</div>
+                            <div class="impact-value danger">-$2,878,085</div>
+                        </div>
+                        <div class="impact-percent">80.92%</div>
+                    </div>
+                    <div class="impact-item">
+                        <div class="impact-icon zero">
+                            <svg fill="none" stroke="#4cd2ff" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                        </div>
+                        <div class="impact-content">
+                            <div class="impact-label">Zero-value Transfers</div>
+                            <div class="impact-value danger">-$467,811</div>
+                        </div>
+                        <div class="impact-percent">13.15%</div>
+                    </div>
+                    <div class="impact-item">
+                        <div class="impact-icon counterfeit">
+                            <svg fill="none" stroke="#ff4d6a" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                        </div>
+                        <div class="impact-content">
+                            <div class="impact-label">Fake Token Transfers</div>
+                            <div class="impact-value danger">-$210,996</div>
+                        </div>
+                        <div class="impact-percent">5.93%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attempts vs Success Analysis -->
+        <section class="effectiveness-section">
+            <div class="section-header">
+                <h2>Attack Attempts vs Success Rate</h2>
+                <p>Data from CyLab's daily attack recap reveals a striking gap between attempt volume and actual effectiveness</p>
+            </div>
+
+            <div class="effectiveness-grid">
+                <!-- Total Attempts Panel -->
+                <div class="attempts-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-title-icon">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                            </div>
+                            Total Poisoning Attempts
+                        </div>
+                    </div>
+                    <div class="attempts-total">
+                        <div class="attempts-total-label">Last 30 Days</div>
+                        <div class="attempts-total-value">8,448,606</div>
+                        <div class="attempts-total-sub">Poisoning attempts detected</div>
+                    </div>
+                    <div class="attempt-row">
+                        <span class="attempt-dot" style="background: #ff4d6a;"></span>
+                        <div class="attempt-info">
+                            <div class="attempt-name">Fake Token Transfer</div>
+                            <div class="attempt-count">5,092,527 attempts</div>
+                        </div>
+                        <div class="attempt-percent" style="color: #ff4d6a;">60.28%</div>
+                    </div>
+                    <div class="attempt-row">
+                        <span class="attempt-dot" style="background: #00ffd5;"></span>
+                        <div class="attempt-info">
+                            <div class="attempt-name">Dust Transfer</div>
+                            <div class="attempt-count">772,841 attempts</div>
+                        </div>
+                        <div class="attempt-percent" style="color: #00ffd5;">9.15%</div>
+                    </div>
+                    <div class="attempt-row">
+                        <span class="attempt-dot" style="background: #4cd2ff;"></span>
+                        <div class="attempt-info">
+                            <div class="attempt-name">Zero-value Transfer</div>
+                            <div class="attempt-count">2,583,239 attempts</div>
+                        </div>
+                        <div class="attempt-percent" style="color: #4cd2ff;">30.58%</div>
+                    </div>
+                </div>
+
+                <!-- Key Insights Panel -->
+                <div class="insights-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-title-icon" style="background: linear-gradient(135deg, rgba(255, 77, 106, 0.2), rgba(255, 140, 77, 0.1));">
+                                <svg fill="none" stroke="#ff4d6a" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                                </svg>
+                            </div>
+                            Key Insights
+                        </div>
+                    </div>
+
+                    <div class="insight-card warning">
+                        <div class="insight-title">Fake Token: Most Common, Least Effective</div>
+                        <div class="insight-text">
+                            Despite making up <span class="insight-highlight">60.28%</span> of all attempts, fake token attacks account for only <span class="insight-highlight">5.93%</span> of stolen funds. Users have learned to spot fake tokens.
+                        </div>
+                    </div>
+
+                    <div class="insight-card success">
+                        <div class="insight-title">Zero-value: High ROI Attack Vector</div>
+                        <div class="insight-text">
+                            Only <span class="insight-highlight">30.58%</span> of attempts, but responsible for <span class="insight-highlight">50.33%</span> of successful cases. Free to execute (no token cost), making it highly profitable.
+                        </div>
+                    </div>
+
+                    <div class="insight-card info">
+                        <div class="insight-title">Dust Transfers: Cost vs Reward</div>
+                        <div class="insight-text">
+                            Just <span class="insight-highlight">9.15%</span> of attempts because each attack costs cents multiplied by number of victims. Yet when successful, causes <span class="insight-highlight">80.92%</span> of financial damage.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Effectiveness Comparison Bars -->
+            <div class="panel" style="margin-top: 2rem;">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <div class="panel-title-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                        </div>
+                        Attempts % vs Financial Damage %
+                    </div>
+                </div>
+                <div class="comparison-bars">
+                    <div class="comparison-item">
+                        <div class="comparison-header">
+                            <div class="comparison-label">
+                                <span class="attack-type-dot zero"></span>
+                                Zero-value Transfer
+                            </div>
+                            <div class="comparison-values">30.58% attempts → 13.15% damage</div>
+                        </div>
+                        <div class="comparison-bar-container">
+                            <div class="comparison-bar-attempts" style="width: 70%;">Attempts: 30.58%</div>
+                            <div class="comparison-bar-success zero" style="width: 30%;">Damage: 13.15%</div>
+                        </div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-header">
+                            <div class="comparison-label">
+                                <span class="attack-type-dot tiny"></span>
+                                Dust Transfer
+                            </div>
+                            <div class="comparison-values">9.15% attempts → 80.92% damage</div>
+                        </div>
+                        <div class="comparison-bar-container">
+                            <div class="comparison-bar-attempts" style="width: 10%;">9.15%</div>
+                            <div class="comparison-bar-success tiny" style="width: 90%;">Damage: 80.92%</div>
+                        </div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-header">
+                            <div class="comparison-label">
+                                <span class="attack-type-dot counterfeit"></span>
+                                Fake Token Transfer
+                            </div>
+                            <div class="comparison-values">60.28% attempts → 5.93% damage</div>
+                        </div>
+                        <div class="comparison-bar-container">
+                            <div class="comparison-bar-attempts" style="width: 91%;">Attempts: 60.28%</div>
+                            <div class="comparison-bar-success counterfeit" style="width: 9%;">5.93%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works -->
+        <section class="how-it-works">
+            <div class="section-header">
+                <h2>How Address Poisoning Works</h2>
+                <p>Attackers exploit transaction history UI patterns to trick victims into sending funds to lookalike addresses</p>
+            </div>
+            <div class="attack-flow">
+                <div class="flow-step">
+                    <div class="flow-step-number">1</div>
+                    <h3>Target Identification</h3>
+                    <p>Attacker monitors victim's wallet for regular transaction patterns and recipients</p>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">2</div>
+                    <h3>Address Generation</h3>
+                    <p>Creates lookalike address with matching first/last characters (vanity address)</p>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">3</div>
+                    <h3>History Poisoning</h3>
+                    <p>Sends zero/tiny value transactions to plant fake address in victim's history</p>
+                </div>
+                <div class="flow-step danger">
+                    <div class="flow-step-number">4</div>
+                    <h3>Victim Confusion</h3>
+                    <p>Victim copies wrong address from history, sending funds to attacker</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-logo">
+                <span>Forta</span>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Spotlight effect following mouse
+        document.addEventListener('mousemove', (e) => {
+            const spotlight = document.querySelector('.spotlight');
+            const x = (e.clientX / window.innerWidth) * 100;
+            const y = (e.clientY / window.innerHeight) * 100;
+            spotlight.style.setProperty('--mouse-x', `${x}%`);
+            spotlight.style.setProperty('--mouse-y', `${y}%`);
+        });
+
+        // Animate bars on scroll
+        const observerOptions = {
+            threshold: 0.5,
+            rootMargin: '0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const bars = entry.target.querySelectorAll('.attack-type-fill');
+                    bars.forEach(bar => {
+                        const width = bar.style.width;
+                        bar.style.width = '0%';
+                        setTimeout(() => {
+                            bar.style.width = width;
+                        }, 100);
+                    });
+                }
+            });
+        }, observerOptions);
+
+        const attackTypes = document.querySelector('.attack-types');
+        if (attackTypes) {
+            observer.observe(attackTypes);
+        }
+
+        // Number counter animation
+        function animateValue(element, start, end, duration) {
+            const range = end - start;
+            const startTime = performance.now();
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const current = start + (range * easeOut);
+
+                if (element.classList.contains('currency')) {
+                    element.textContent = '$' + current.toLocaleString('en-US', {maximumFractionDigits: 0});
+                } else {
+                    element.textContent = Math.floor(current).toLocaleString();
+                }
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+
+            requestAnimationFrame(update);
+        }
+    </script>
+</body>
+</html>
