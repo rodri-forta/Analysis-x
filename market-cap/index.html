@@ -553,6 +553,7 @@
 
         .token-info { display: flex; flex-direction: column; gap: 1px; }
         .token-symbol { font-weight: 600; color: var(--text-primary); }
+        .token-symbol.fort-highlighted { color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
         .token-name { font-size: 0.65rem; color: var(--text-dim); }
 
         .quadrant-badge {
@@ -967,6 +968,372 @@
             border-radius: 50%;
         }
 
+        /* FORT Special Highlighting */
+        .fort-gold-highlight {
+            border: 3px solid #FFD700 !important;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important;
+        }
+
+        /* Security Analysis Section */
+        .security-analysis {
+            background: linear-gradient(135deg, rgba(248, 81, 73, 0.08), rgba(255, 215, 0, 0.08));
+            border: 1px solid var(--accent-red);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .security-analysis::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #FFD700, #F85149, #FFD700);
+        }
+
+        .security-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .security-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .security-title h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #FFD700, #F85149);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .security-title-icon {
+            font-size: 1.5rem;
+        }
+
+        .security-subtitle {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        .fort-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2));
+            border: 1px solid #FFD700;
+            border-radius: 8px;
+            padding: 8px 16px;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .fort-badge-icon {
+            font-size: 1.2rem;
+        }
+
+        .fort-badge-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #FFD700;
+            font-weight: 600;
+        }
+
+        /* Competitors Bar Chart */
+        .competitors-chart {
+            margin-bottom: 24px;
+        }
+
+        .competitors-chart-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 16px;
+        }
+
+        .competitor-row {
+            display: grid;
+            grid-template-columns: 80px 1fr 70px 80px;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .competitor-symbol {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .competitor-symbol.fort {
+            color: #FFD700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .competitor-bar-container {
+            height: 24px;
+            background: var(--bg-elevated);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .competitor-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.8s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+        }
+
+        .competitor-bar.default {
+            background: linear-gradient(90deg, var(--accent-red), rgba(248, 81, 73, 0.6));
+        }
+
+        .competitor-bar.fort {
+            background: linear-gradient(90deg, #FFD700, #FFA500);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .competitor-followers {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-align: right;
+        }
+
+        .competitor-mcap {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-align: right;
+        }
+
+        /* FORT Metrics Cards */
+        .fort-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .fort-metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+            position: relative;
+        }
+
+        .fort-metric-card.highlighted {
+            border-color: #FFD700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+        }
+
+        .fort-metric-card.highlighted::before {
+            content: '⭐';
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            font-size: 1rem;
+        }
+
+        .fort-metric-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .fort-metric-value.gold {
+            color: #FFD700;
+        }
+
+        .fort-metric-value.negative {
+            color: var(--accent-red);
+        }
+
+        .fort-metric-value.positive {
+            color: var(--accent-green);
+        }
+
+        .fort-metric-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        /* Quadrant Explanation */
+        .quadrant-explanation {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .quadrant-explanation-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quadrant-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+            background: var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .quadrant-cell {
+            padding: 16px;
+            text-align: center;
+        }
+
+        .quadrant-cell.hidden-gem-bg {
+            background: rgba(57, 197, 207, 0.15);
+        }
+
+        .quadrant-cell.validated-bg {
+            background: rgba(63, 185, 80, 0.15);
+        }
+
+        .quadrant-cell.overvalued-bg {
+            background: rgba(248, 81, 73, 0.15);
+        }
+
+        .quadrant-cell.struggling-bg {
+            background: rgba(125, 133, 144, 0.1);
+        }
+
+        .quadrant-cell-icon {
+            font-size: 1.5rem;
+            margin-bottom: 6px;
+        }
+
+        .quadrant-cell-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .quadrant-cell.hidden-gem-bg .quadrant-cell-title { color: var(--accent-cyan); }
+        .quadrant-cell.validated-bg .quadrant-cell-title { color: var(--accent-green); }
+        .quadrant-cell.overvalued-bg .quadrant-cell-title { color: var(--accent-red); }
+        .quadrant-cell.struggling-bg .quadrant-cell-title { color: var(--text-dim); }
+
+        .quadrant-cell-desc {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--text-dim);
+        }
+
+        .quadrant-cell-signal {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-top: 8px;
+            display: inline-block;
+        }
+
+        .quadrant-cell.hidden-gem-bg .quadrant-cell-signal {
+            background: rgba(57, 197, 207, 0.2);
+            color: var(--accent-cyan);
+        }
+
+        .quadrant-cell.validated-bg .quadrant-cell-signal {
+            background: rgba(63, 185, 80, 0.2);
+            color: var(--accent-green);
+        }
+
+        .quadrant-cell.overvalued-bg .quadrant-cell-signal {
+            background: rgba(248, 81, 73, 0.2);
+            color: var(--accent-red);
+        }
+
+        .quadrant-cell.struggling-bg .quadrant-cell-signal {
+            background: rgba(125, 133, 144, 0.15);
+            color: var(--text-dim);
+        }
+
+        .fort-position {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(248, 81, 73, 0.1));
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .fort-position-icon {
+            font-size: 1.5rem;
+        }
+
+        .fort-position-text {
+            flex: 1;
+        }
+
+        .fort-position-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #FFD700;
+        }
+
+        .fort-position-details {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        .axis-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 0 4px;
+        }
+
+        .axis-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        .axis-label.right {
+            text-align: right;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .container { padding: 16px; }
@@ -1214,6 +1581,84 @@
             </div>
         </div>
 
+        <!-- Security Sector Analysis -->
+        <div class="security-analysis" id="securitySection">
+            <div class="security-header">
+                <div>
+                    <div class="security-title">
+                        <span class="security-title-icon">🛡️</span>
+                        <h2>Security Sector Analysis</h2>
+                    </div>
+                    <p class="security-subtitle">FORT vs Security Competitors • Twitter Followers & Market Cap Comparison</p>
+                </div>
+                <div class="fort-badge">
+                    <span class="fort-badge-icon">⭐</span>
+                    <span class="fort-badge-text">FORT Highlighted</span>
+                </div>
+            </div>
+
+            <!-- FORT Metrics Cards -->
+            <div class="fort-metrics" id="fortMetrics">
+                <!-- Will be populated by JavaScript -->
+            </div>
+
+            <!-- Competitors Chart -->
+            <div class="competitors-chart">
+                <h3 class="competitors-chart-title">Security Tokens: Followers Comparison</h3>
+                <div id="competitorsChart">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Quadrant Explanation -->
+            <div class="quadrant-explanation">
+                <h3 class="quadrant-explanation-title">
+                    <span>📊</span> Quadrant Methodology
+                </h3>
+                <p class="security-subtitle" style="margin-bottom: 16px;">
+                    Tokens are categorized based on Twitter followers (social reach) and price performance.
+                    The median of 84K followers divides high/low social presence. 0% divides positive/negative returns.
+                </p>
+                <div class="axis-labels">
+                    <span class="axis-label">← Low Followers (&lt;84K)</span>
+                    <span class="axis-label right">High Followers (&gt;84K) →</span>
+                </div>
+                <div class="quadrant-grid">
+                    <div class="quadrant-cell hidden-gem-bg">
+                        <div class="quadrant-cell-icon">🎯</div>
+                        <div class="quadrant-cell-title">HIDDEN GEM</div>
+                        <div class="quadrant-cell-desc">Under-discovered but performing well</div>
+                        <div class="quadrant-cell-signal">BUY SIGNAL</div>
+                    </div>
+                    <div class="quadrant-cell validated-bg">
+                        <div class="quadrant-cell-icon">✅</div>
+                        <div class="quadrant-cell-title">VALIDATED</div>
+                        <div class="quadrant-cell-desc">Popular AND performing well</div>
+                        <div class="quadrant-cell-signal">STRONG HOLD</div>
+                    </div>
+                    <div class="quadrant-cell struggling-bg">
+                        <div class="quadrant-cell-icon">❌</div>
+                        <div class="quadrant-cell-title">STRUGGLING</div>
+                        <div class="quadrant-cell-desc">Low attention AND declining</div>
+                        <div class="quadrant-cell-signal">AVOID</div>
+                    </div>
+                    <div class="quadrant-cell overvalued-bg">
+                        <div class="quadrant-cell-icon">⚠️</div>
+                        <div class="quadrant-cell-title">OVERVALUED</div>
+                        <div class="quadrant-cell-desc">Popular but price declining</div>
+                        <div class="quadrant-cell-signal">SELL SIGNAL</div>
+                    </div>
+                </div>
+                <div class="fort-position" id="fortPosition">
+                    <span class="fort-position-icon">📍</span>
+                    <div class="fort-position-text">
+                        <div class="fort-position-title">FORT Position: Loading...</div>
+                        <div class="fort-position-details">Calculating position based on current data...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Data Table -->
         <div class="table-section">
             <div class="table-header">
@@ -1369,6 +1814,105 @@
         ];
 
         const MEDIAN_FOLLOWERS = 84000;
+
+        // FORT and Security Competitors Data (hardcoded since not all are in our dataset)
+        const HIGHLIGHTED_TOKENS = ['FORT'];
+        const SECURITY_COMPETITORS = [
+            { symbol: 'CTK', name: 'Shentu/CertiK', followers: 538000, marketCap: 40000000, twitter: '@CertiK', highlighted: false },
+            { symbol: 'GPS', name: 'GoPlus Security', followers: 462000, marketCap: 35000000, twitter: '@GoPlusSecurity', highlighted: false },
+            { symbol: 'NAORIS', name: 'Naoris Protocol', followers: 261000, marketCap: null, twitter: '@NaorisProtocol', highlighted: false },
+            { symbol: 'HAI', name: 'Hacken', followers: 139000, marketCap: 5500000, twitter: '@hackenclub', highlighted: false },
+            { symbol: 'DIA', name: 'DIA Data', followers: 80000, marketCap: 31000000, twitter: '@DIAdata_org', highlighted: false },
+            { symbol: 'QSP', name: 'Quantstamp', followers: 80000, marketCap: null, twitter: '@Quantstamp', highlighted: false },
+            { symbol: 'API3', name: 'API3', followers: 69000, marketCap: 80000000, twitter: '@API3DAO', highlighted: false },
+            { symbol: 'FORT', name: 'Forta Network', followers: 52000, marketCap: 12400000, twitter: '@FortaNetwork', highlighted: true },
+            { symbol: 'NCT', name: 'PolySwarm', followers: 13000, marketCap: 18700000, twitter: '@PolySwarm', highlighted: false }
+        ];
+
+        function isHighlightedToken(symbol) {
+            return HIGHLIGHTED_TOKENS.includes(symbol);
+        }
+
+        // Custom plugin to draw black circle with white star on top of FORT bubbles
+        const fortStarPlugin = {
+            id: 'fortStar',
+            afterDatasetsDraw(chart) {
+                const ctx = chart.ctx;
+
+                // Find FORT data points across all datasets
+                chart.data.datasets.forEach((dataset, datasetIndex) => {
+                    dataset.data.forEach((point, pointIndex) => {
+                        if (point.label && isHighlightedToken(point.label)) {
+                            const meta = chart.getDatasetMeta(datasetIndex);
+                            const element = meta.data[pointIndex];
+                            if (element) {
+                                const x = element.x;
+                                const y = element.y;
+                                const size = 32; // Forta logo size
+
+                                // Draw FORT marker (Forta X logo)
+                                drawFortMarker(ctx, x, y, size);
+                            }
+                        }
+                    });
+                });
+            }
+        };
+
+        // Function to draw Forta logo marker (X-shape with gradient)
+        function drawFortMarker(ctx, cx, cy, size) {
+            ctx.save();
+
+            // Scale factor to fit the logo in the marker size
+            // Original SVG is 200x200, path centered around 100,100
+            const scale = size / 145; // Scale to fit the X shape
+
+            // Translate to center
+            ctx.translate(cx, cy);
+            ctx.scale(scale, scale);
+
+            // Draw the Forta X logo path (centered at 0,0)
+            // Original path translated from center point ~100, ~100
+            ctx.beginPath();
+
+            // Forta X-shape path (recentered)
+            ctx.moveTo(33, 12.35);    // Start point (133-100, 111.85-99.5)
+            ctx.bezierCurveTo(46.631, 4.877, 61.268, -0.593, 76.46, -3.89);
+            ctx.lineTo(65.21, -38.5);
+            ctx.bezierCurveTo(60.39, -36.393, 55.43, -34.507, 50.33, -32.84);
+            ctx.bezierCurveTo(40.601, -29.678, 30.597, -27.431, 20.45, -26.13);
+            ctx.bezierCurveTo(17.552, -41.409, 16.872, -57.027, 18.43, -72.5);
+            ctx.lineTo(-18, -72.5);
+            ctx.bezierCurveTo(-17.49, -67.27, -17.22, -61.96, -17.22, -56.6);
+            ctx.bezierCurveTo(-17.194, -46.372, -18.125, -36.164, -20, -26.11);
+            ctx.bezierCurveTo(-35.436, -28.063, -50.508, -32.236, -64.75, -38.5);
+            ctx.lineTo(-76, -3.89);
+            ctx.bezierCurveTo(-70.86, -2.763, -65.74, -1.373, -60.64, 0.28);
+            ctx.bezierCurveTo(-50.906, 3.433, -41.491, 7.498, -32.52, 12.42);
+            ctx.bezierCurveTo(-39.153, 26.478, -47.778, 39.505, -58.13, 51.1);
+            ctx.lineTo(-28.69, 72.5);
+            ctx.bezierCurveTo(-26.023, 67.96, -23.117, 63.52, -19.97, 59.18);
+            ctx.bezierCurveTo(-13.96, 50.898, -7.187, 43.198, 0.26, 36.18);
+            ctx.bezierCurveTo(11.583, 46.835, 21.309, 59.068, 29.14, 72.5);
+            ctx.lineTo(58.59, 51.11);
+            ctx.bezierCurveTo(55.1, 47.17, 51.76, 43.04, 48.59, 38.7);
+            ctx.bezierCurveTo(42.58, 30.424, 37.361, 21.602, 33, 12.35);
+            ctx.closePath();
+
+            // White fill
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fill();
+
+            // Add subtle glow for visibility
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.6)';
+            ctx.shadowBlur = 10;
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // Register the plugin globally
+        Chart.register(fortStarPlugin);
 
         // State
         let allProjects = [];
@@ -1633,6 +2177,9 @@
 
         function filterProjects() {
             filteredProjects = allProjects.filter(p => {
+                // ALWAYS include highlighted tokens (FORT) regardless of filters
+                if (isHighlightedToken(p.symbol)) return true;
+
                 // Exchange filter
                 if (activeExchange === 'listed' && !p.isListed) return false;
                 if (activeExchange === 'not-listed' && p.isListed) return false;
@@ -1693,7 +2240,114 @@
             updatePrimaryChart();
             updateQuadrantSummary();
             updateQuadrantChart();
+            updateSecuritySection();
             updateTable();
+        }
+
+        // Security Section Updates
+        function updateSecuritySection() {
+            // Find FORT in the data
+            const fort = allProjects.find(p => p.symbol === 'FORT');
+
+            // Update FORT metrics cards
+            const fortMetrics = document.getElementById('fortMetrics');
+            if (fort) {
+                const mcapRank = allProjects
+                    .filter(p => p.market_cap)
+                    .sort((a, b) => b.market_cap - a.market_cap)
+                    .findIndex(p => p.symbol === 'FORT') + 1;
+
+                const followerRank = allProjects
+                    .filter(p => p.twitter_followers)
+                    .sort((a, b) => b.twitter_followers - a.twitter_followers)
+                    .findIndex(p => p.symbol === 'FORT') + 1;
+
+                const quadrant = getQuadrant(fort.twitter_followers, fort.percent_change_7d);
+                const quadrantIcon = {
+                    'hidden-gem': '🎯',
+                    'validated': '✅',
+                    'overvalued': '⚠️',
+                    'struggling': '❌'
+                }[quadrant] || '—';
+
+                fortMetrics.innerHTML = `
+                    <div class="fort-metric-card highlighted">
+                        <div class="fort-metric-value gold">FORT</div>
+                        <div class="fort-metric-label">Forta Network</div>
+                    </div>
+                    <div class="fort-metric-card">
+                        <div class="fort-metric-value">$${formatNumber(fort.market_cap)}</div>
+                        <div class="fort-metric-label">Market Cap (#${mcapRank})</div>
+                    </div>
+                    <div class="fort-metric-card">
+                        <div class="fort-metric-value">${formatNumber(fort.twitter_followers)}</div>
+                        <div class="fort-metric-label">Followers (#${followerRank})</div>
+                    </div>
+                    <div class="fort-metric-card">
+                        <div class="fort-metric-value ${(fort.percent_change_7d || 0) >= 0 ? 'positive' : 'negative'}">${formatPercent(fort.percent_change_7d)}</div>
+                        <div class="fort-metric-label">7d Change</div>
+                    </div>
+                    <div class="fort-metric-card">
+                        <div class="fort-metric-value ${(fort.percent_change_30d || 0) >= 0 ? 'positive' : 'negative'}">${formatPercent(fort.percent_change_30d)}</div>
+                        <div class="fort-metric-label">30d Change</div>
+                    </div>
+                    <div class="fort-metric-card">
+                        <div class="fort-metric-value">${quadrantIcon}</div>
+                        <div class="fort-metric-label">Quadrant: ${quadrant?.toUpperCase() || 'N/A'}</div>
+                    </div>
+                `;
+
+                // Update FORT position
+                const fortPosition = document.getElementById('fortPosition');
+                const quadrantLabel = {
+                    'hidden-gem': 'HIDDEN GEM',
+                    'validated': 'VALIDATED',
+                    'overvalued': 'OVERVALUED',
+                    'struggling': 'STRUGGLING'
+                }[quadrant] || 'Unknown';
+
+                fortPosition.innerHTML = `
+                    <span class="fort-position-icon">📍</span>
+                    <div class="fort-position-text">
+                        <div class="fort-position-title">FORT Position: ${quadrantLabel}</div>
+                        <div class="fort-position-details">
+                            Followers: ${formatNumber(fort.twitter_followers)} (${fort.twitter_followers >= MEDIAN_FOLLOWERS ? 'above' : 'below'} 84K median) •
+                            Performance: ${formatPercent(fort.percent_change_7d)} (${fort.percent_change_7d >= 0 ? 'positive' : 'negative'})
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Update competitors chart
+            const competitorsChart = document.getElementById('competitorsChart');
+            const maxFollowers = Math.max(...SECURITY_COMPETITORS.map(c => c.followers));
+
+            // Update FORT data from live data if available
+            const competitorsWithLiveData = SECURITY_COMPETITORS.map(c => {
+                if (c.symbol === 'FORT' && fort) {
+                    return {
+                        ...c,
+                        followers: fort.twitter_followers || c.followers,
+                        marketCap: fort.market_cap || c.marketCap
+                    };
+                }
+                return c;
+            }).sort((a, b) => b.followers - a.followers);
+
+            competitorsChart.innerHTML = competitorsWithLiveData.map(comp => {
+                const barWidth = (comp.followers / maxFollowers) * 100;
+                const isFort = comp.highlighted;
+                return `
+                    <div class="competitor-row">
+                        <span class="competitor-symbol ${isFort ? 'fort' : ''}">${comp.symbol}${isFort ? ' ⭐' : ''}</span>
+                        <div class="competitor-bar-container">
+                            <div class="competitor-bar ${isFort ? 'fort' : 'default'}" style="width: ${barWidth}%"></div>
+                        </div>
+                        <span class="competitor-followers">${formatNumber(comp.followers)}</span>
+                        <span class="competitor-mcap">${comp.marketCap ? '$' + formatNumber(comp.marketCap) : 'N/A'}</span>
+                    </div>
+                `;
+            }).join('');
         }
 
         function updateStats() {
@@ -1746,6 +2400,7 @@
         function updatePrimaryChart() {
             const ctx = document.getElementById('primaryChart').getContext('2d');
 
+            // Main project data (FORT gets normal size, will be overlaid with star)
             const chartData = filteredProjects
                 .filter(p => p.twitter_followers && p.market_cap)
                 .map(p => ({
@@ -1770,11 +2425,45 @@
                     website: p.website,
                     twitter: p.twitter,
                     logo: p.logo,
-                    tags: p.tags
+                    tags: p.tags,
+                    isCompetitor: false
                 }));
 
+            // Add security competitors that are NOT in main data
+            const existingSymbols = chartData.map(d => d.label);
+            const competitorsToAdd = SECURITY_COMPETITORS
+                .filter(c => !existingSymbols.includes(c.symbol) && c.marketCap)
+                .map(c => ({
+                    x: c.followers,
+                    y: c.marketCap,
+                    r: 10,
+                    label: c.symbol,
+                    name: c.name,
+                    price: null,
+                    marketCap: c.marketCap,
+                    followers: c.followers,
+                    volume: null,
+                    perf7d: null,
+                    perf30d: null,
+                    perf90d: null,
+                    isListed: false,
+                    hasVC: false,
+                    sector: 'security',
+                    ecosystems: [],
+                    isMultiEcosystem: false,
+                    description: `Security competitor: ${c.name}`,
+                    website: null,
+                    twitter: c.twitter ? `https://twitter.com/${c.twitter.replace('@', '')}` : null,
+                    logo: null,
+                    tags: ['cybersecurity'],
+                    isCompetitor: true
+                }));
+
+            // Combine data - FORT included as normal bubble, star drawn on top by plugin
+            const allChartData = [...chartData, ...competitorsToAdd];
+
             // Store chart data globally for click handler
-            window.primaryChartData = chartData;
+            window.primaryChartData = allChartData;
 
             if (primaryChart) primaryChart.destroy();
 
@@ -1783,10 +2472,17 @@
                 data: {
                     datasets: [{
                         label: 'Tokens',
-                        data: chartData,
-                        backgroundColor: chartData.map(d => getSectorColor(d.sector, 0.6)),
-                        borderColor: chartData.map(d => getSectorColor(d.sector, 1)),
-                        borderWidth: 1
+                        data: allChartData,
+                        backgroundColor: allChartData.map(d => {
+                            if (d.isCompetitor) return 'rgba(248, 81, 73, 0.7)';
+                            return getSectorColor(d.sector, 0.6);
+                        }),
+                        borderColor: allChartData.map(d => {
+                            if (d.isCompetitor) return '#F85149';
+                            return getSectorColor(d.sector, 1);
+                        }),
+                        borderWidth: allChartData.map(d => d.isCompetitor ? 2 : 1),
+                        hoverBorderWidth: 3
                     }]
                 },
                 options: {
@@ -1795,7 +2491,7 @@
                     onClick: (event, elements) => {
                         if (elements.length > 0) {
                             const dataIndex = elements[0].index;
-                            const project = chartData[dataIndex];
+                            const project = allChartData[dataIndex];
                             showTokenModal(project);
                         }
                     },
@@ -1825,10 +2521,21 @@
                             titleFont: { family: 'JetBrains Mono', weight: '600' },
                             bodyFont: { family: 'JetBrains Mono', size: 11 },
                             callbacks: {
-                                title: (items) => items[0]?.raw?.label || '',
+                                title: (items) => {
+                                    const label = items[0]?.raw?.label || '';
+                                    return items[0]?.raw?.isCompetitor ? `${label} (Competitor)` : label;
+                                },
                                 label: (ctx) => {
                                     const d = ctx.raw;
                                     const sectorName = SECTOR_CATEGORIES[d.sector]?.name || 'Other';
+                                    if (d.isCompetitor) {
+                                        return [
+                                            `⚔️ Security Competitor`,
+                                            `MCap: $${formatNumber(d.marketCap)}`,
+                                            `Followers: ${formatNumber(d.followers)}`,
+                                            `Click for details...`
+                                        ];
+                                    }
                                     return [
                                         `Sector: ${sectorName}`,
                                         `MCap: $${formatNumber(d.marketCap)}`,
@@ -1866,6 +2573,9 @@
                     marketCap: p.market_cap,
                     followers: p.twitter_followers,
                     perf: p[perfField],
+                    perf7d: p.percent_change_7d,
+                    perf30d: p.percent_change_30d,
+                    perf90d: p.percent_change_90d,
                     isListed: p.isListed,
                     hasVC: p.hasVC,
                     sector: p.sector,
@@ -1875,22 +2585,26 @@
                     logo: p.logo,
                     ecosystems: p.ecosystems,
                     isMultiEcosystem: p.isMultiEcosystem,
-                    tags: p.tags
+                    tags: p.tags,
+                    isCompetitor: false
                 }));
 
             // Store chart data globally for click handler
             window.quadrantChartData = chartData;
 
-            // Group by sector for colored datasets
+            // Group by sector for colored datasets (FORT stays in its sector, star drawn by plugin)
             const sectorGroups = Object.keys(SECTOR_CATEGORIES);
-            const datasets = sectorGroups.map(sector => ({
-                label: SECTOR_CATEGORIES[sector].name,
-                data: chartData.filter(d => d.sector === sector),
-                backgroundColor: getSectorColor(sector, 0.6),
-                borderColor: getSectorColor(sector, 1),
-                borderWidth: 1,
-                hoverBorderWidth: 3
-            })).filter(ds => ds.data.length > 0);
+            const datasets = sectorGroups.map(sector => {
+                const sectorData = chartData.filter(d => d.sector === sector);
+                return {
+                    label: SECTOR_CATEGORIES[sector].name,
+                    data: sectorData,
+                    backgroundColor: getSectorColor(sector, 0.6),
+                    borderColor: getSectorColor(sector, 1),
+                    borderWidth: 1,
+                    hoverBorderWidth: 3
+                };
+            }).filter(ds => ds.data.length > 0);
 
             if (quadrantChart) quadrantChart.destroy();
 
@@ -2067,16 +2781,20 @@
                     ? (ecosystems.length > 1 ? '<span class="badge multi-eco">Multi</span>' : '') +
                       ecosystems.slice(0, 2).map(e => `<span class="badge eco">${formatEcosystemName(e).slice(0, 3)}</span>`).join('')
                     : '—';
+                const isFortHighlighted = isHighlightedToken(p.symbol);
+                const rowStyle = isFortHighlighted
+                    ? 'cursor: pointer; background: linear-gradient(90deg, rgba(255, 215, 0, 0.15), transparent); border-left: 3px solid #FFD700;'
+                    : 'cursor: pointer;';
 
                 return `
-                    <tr style="cursor: pointer;" onclick="showTokenModalFromTable('${p.symbol}')">
+                    <tr style="${rowStyle}" onclick="showTokenModalFromTable('${p.symbol}')">
                         <td>
                             <div class="token-cell">
                                 <div class="token-logo">
                                     ${p.logo ? `<img src="${p.logo}" alt="${p.symbol}" onerror="this.style.display='none'; this.parentNode.textContent='${p.symbol.slice(0,2)}'">` : p.symbol.slice(0,2)}
                                 </div>
                                 <div class="token-info">
-                                    <span class="token-symbol">${p.symbol}</span>
+                                    <span class="token-symbol ${isFortHighlighted ? 'fort-highlighted' : ''}">${p.symbol}${isFortHighlighted ? ' ⭐' : ''}</span>
                                     <span class="token-name">${p.name?.slice(0, 18)}${p.name?.length > 18 ? '...' : ''}</span>
                                 </div>
                             </div>
