@@ -1,0 +1,2263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Analytics | Followers vs Performance</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e14;
+            --bg-secondary: #0f1419;
+            --bg-card: #151b23;
+            --bg-elevated: #1a222c;
+            --border: #252d38;
+            --border-bright: #3a4553;
+            --text-primary: #e6edf3;
+            --text-secondary: #7d8590;
+            --text-dim: #484f58;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-red: #f85149;
+            --accent-orange: #d29922;
+            --accent-purple: #a371f7;
+            --accent-cyan: #39c5cf;
+            --glow-blue: rgba(88, 166, 255, 0.15);
+            --glow-green: rgba(63, 185, 80, 0.15);
+            --glow-red: rgba(248, 81, 73, 0.15);
+            --quadrant-hidden-gem: rgba(57, 197, 207, 0.15);
+            --quadrant-validated: rgba(63, 185, 80, 0.15);
+            --quadrant-overvalued: rgba(248, 81, 73, 0.15);
+            --quadrant-struggling: rgba(125, 133, 144, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image:
+                linear-gradient(rgba(88, 166, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(88, 166, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo-section { display: flex; align-items: center; gap: 16px; }
+
+        .logo-icon {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 0 30px var(--glow-blue);
+        }
+
+        .logo-text h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-text p {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .header-stats { display: flex; gap: 24px; align-items: center; }
+
+        .header-stat { text-align: right; }
+
+        .header-stat-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 2px;
+        }
+
+        .header-stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+        }
+
+        /* Key Insight Banner */
+        .insight-banner {
+            background: linear-gradient(135deg, rgba(248, 81, 73, 0.1), rgba(57, 197, 207, 0.1));
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .insight-main {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .insight-icon {
+            font-size: 1.5rem;
+        }
+
+        .insight-text h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .insight-text p {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+        }
+
+        .insight-stats {
+            display: flex;
+            gap: 24px;
+        }
+
+        .insight-stat {
+            text-align: center;
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .insight-stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .insight-stat-value.negative { color: var(--accent-red); }
+        .insight-stat-value.positive { color: var(--accent-green); }
+
+        .insight-stat-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        /* Strategic Filters */
+        .strategic-filters {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+        }
+
+        .strategic-filters-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .filter-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .filter-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .filter-card-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .filter-card-insight {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: var(--bg-elevated);
+        }
+
+        .filter-card-insight.negative {
+            color: var(--accent-red);
+            background: rgba(248, 81, 73, 0.1);
+        }
+
+        .filter-card-insight.positive {
+            color: var(--accent-green);
+            background: rgba(63, 185, 80, 0.1);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 8px 14px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .filter-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--border-bright);
+            color: var(--text-primary);
+        }
+
+        .filter-btn.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: var(--bg-primary);
+            box-shadow: 0 0 15px var(--glow-blue);
+        }
+
+        .filter-btn.active.green {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            box-shadow: 0 0 15px var(--glow-green);
+        }
+
+        .filter-btn.active.red {
+            background: var(--accent-red);
+            border-color: var(--accent-red);
+            box-shadow: 0 0 15px var(--glow-red);
+        }
+
+        .search-input {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            padding: 10px 16px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px var(--glow-blue);
+        }
+
+        .search-input::placeholder { color: var(--text-dim); }
+
+        /* Quadrant Chart Section */
+        .quadrant-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .quadrant-section::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green), var(--accent-red), var(--text-dim));
+            border-radius: 16px 16px 0 0;
+        }
+
+        .quadrant-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .quadrant-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .quadrant-subtitle {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        .quadrant-legend {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            background: var(--bg-card);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .legend-icon { font-size: 1rem; }
+
+        .legend-item.hidden-gem { border-color: var(--accent-cyan); }
+        .legend-item.validated { border-color: var(--accent-green); }
+        .legend-item.overvalued { border-color: var(--accent-red); }
+        .legend-item.struggling { border-color: var(--text-dim); }
+
+        .chart-container {
+            position: relative;
+            height: 500px;
+        }
+
+        /* Quadrant Summary Cards */
+        .quadrant-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .quadrant-summary { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .quadrant-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quadrant-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 4px; height: 100%;
+        }
+
+        .quadrant-card.hidden-gem::before { background: var(--accent-cyan); }
+        .quadrant-card.validated::before { background: var(--accent-green); }
+        .quadrant-card.overvalued::before { background: var(--accent-red); }
+        .quadrant-card.struggling::before { background: var(--text-dim); }
+
+        .quadrant-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .quadrant-card-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .quadrant-card.hidden-gem .quadrant-card-title { color: var(--accent-cyan); }
+        .quadrant-card.validated .quadrant-card-title { color: var(--accent-green); }
+        .quadrant-card.overvalued .quadrant-card-title { color: var(--accent-red); }
+        .quadrant-card.struggling .quadrant-card-title { color: var(--text-dim); }
+
+        .quadrant-card-signal {
+            font-size: 0.9rem;
+        }
+
+        .quadrant-card-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .quadrant-card-avg {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            margin-top: 4px;
+        }
+
+        .quadrant-card-avg.positive { color: var(--accent-green); }
+        .quadrant-card-avg.negative { color: var(--accent-red); }
+
+        /* Data Table */
+        .table-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table-title { font-size: 1rem; font-weight: 600; }
+
+        .table-controls { display: flex; gap: 10px; }
+
+        .table-control-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .table-control-btn:hover {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+        }
+
+        .table-wrapper { overflow-x: auto; }
+
+        table { width: 100%; border-collapse: collapse; }
+
+        th {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            text-align: left;
+            padding: 12px 14px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        th:hover { color: var(--text-primary); }
+        th.sorted { color: var(--accent-blue); }
+        th .sort-icon { margin-left: 4px; opacity: 0.5; }
+        th.sorted .sort-icon { opacity: 1; }
+
+        td {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        tr:hover td { background: var(--bg-card); }
+
+        .token-cell { display: flex; align-items: center; gap: 10px; }
+
+        .token-logo {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: var(--bg-elevated);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.6rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .token-logo img {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .token-info { display: flex; flex-direction: column; gap: 1px; }
+        .token-symbol { font-weight: 600; color: var(--text-primary); }
+        .token-name { font-size: 0.65rem; color: var(--text-dim); }
+
+        .quadrant-badge {
+            display: inline-block;
+            font-size: 0.55rem;
+            padding: 3px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        .quadrant-badge.hidden-gem {
+            background: rgba(57, 197, 207, 0.15);
+            color: var(--accent-cyan);
+        }
+
+        .quadrant-badge.validated {
+            background: rgba(63, 185, 80, 0.15);
+            color: var(--accent-green);
+        }
+
+        .quadrant-badge.overvalued {
+            background: rgba(248, 81, 73, 0.15);
+            color: var(--accent-red);
+        }
+
+        .quadrant-badge.struggling {
+            background: rgba(125, 133, 144, 0.15);
+            color: var(--text-dim);
+        }
+
+        .badge {
+            display: inline-block;
+            font-size: 0.55rem;
+            padding: 2px 5px;
+            border-radius: 3px;
+            margin-right: 4px;
+        }
+
+        .badge.binance {
+            background: rgba(243, 186, 47, 0.15);
+            color: #f3ba2f;
+        }
+
+        .badge.vc {
+            background: rgba(163, 113, 247, 0.15);
+            color: var(--accent-purple);
+        }
+
+        .badge.eco {
+            background: rgba(88, 166, 255, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .badge.multi-eco {
+            background: linear-gradient(135deg, rgba(98, 126, 234, 0.2), rgba(20, 241, 149, 0.2));
+            color: var(--accent-cyan);
+            border: 1px solid var(--accent-cyan);
+        }
+
+        .sector-badge {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            white-space: nowrap;
+        }
+
+        .change-positive { color: var(--accent-green); }
+        .change-negative { color: var(--accent-red); }
+
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .pagination-info {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+        }
+
+        .pagination-buttons { display: flex; gap: 8px; }
+
+        .pagination-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+        }
+
+        .pagination-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Loading & Empty */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            color: var(--text-dim);
+        }
+
+        .loading-spinner {
+            width: 40px; height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-dim);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* Token Modal */
+        .token-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .token-modal.active { display: flex; }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            position: relative;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: modalSlideIn 0.2s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--accent-red);
+            border-color: var(--accent-red);
+            color: white;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .modal-logo {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            background: var(--bg-elevated);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            overflow: hidden;
+        }
+
+        .modal-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .modal-title-section { flex: 1; }
+
+        .modal-symbol {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .modal-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin: 4px 0 0 0;
+        }
+
+        .modal-sector-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .modal-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .modal-stat {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .modal-stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .modal-stat-value.positive { color: var(--accent-green); }
+        .modal-stat-value.negative { color: var(--accent-red); }
+
+        .modal-stat-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        .modal-ecosystems {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .modal-ecosystem-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .modal-ecosystem-badge.multi {
+            background: linear-gradient(135deg, rgba(98, 126, 234, 0.2), rgba(20, 241, 149, 0.2));
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .modal-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .modal-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            padding: 3px 6px;
+            border-radius: 3px;
+            background: var(--bg-elevated);
+            color: var(--text-dim);
+        }
+
+        .modal-description {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin: 0 0 20px 0;
+            padding: 16px;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .modal-links {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-link {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            padding: 10px 16px;
+            border-radius: 8px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .modal-link:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+
+        /* Sector Legend */
+        .sector-legend {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .sector-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .sector-legend-item:hover {
+            background: var(--bg-elevated);
+        }
+
+        .sector-legend-item.active {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            border: 1px solid var(--border-bright);
+        }
+
+        .sector-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 16px; }
+            header { flex-direction: column; gap: 16px; align-items: flex-start; }
+            .header-stats { width: 100%; justify-content: space-between; }
+            .insight-banner { flex-direction: column; align-items: flex-start; }
+            .filter-grid { grid-template-columns: 1fr; }
+            .chart-container { height: 350px; }
+            th, td { padding: 10px 10px; font-size: 0.65rem; }
+            .token-logo { width: 24px; height: 24px; }
+            .quadrant-legend { display: none; }
+            .modal-stats { grid-template-columns: repeat(2, 1fr); }
+            .modal-content { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="logo-section">
+                <div class="logo-icon">📈</div>
+                <div class="logo-text">
+                    <h1>Crypto Social Analytics</h1>
+                    <p>Followers vs Performance Dashboard</p>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="header-stat">
+                    <div class="header-stat-label">Tokens</div>
+                    <div class="header-stat-value" id="totalTokens">---</div>
+                </div>
+                <div class="header-stat">
+                    <div class="header-stat-label">With Twitter</div>
+                    <div class="header-stat-value" id="withTwitter">---</div>
+                </div>
+                <div class="header-stat">
+                    <div class="header-stat-label">Correlation</div>
+                    <div class="header-stat-value" style="color: var(--accent-orange);">-0.03</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Key Insight Banner -->
+        <div class="insight-banner">
+            <div class="insight-main">
+                <span class="insight-icon">💡</span>
+                <div class="insight-text">
+                    <h3>Key Finding: Twitter Followers ≠ Performance</h3>
+                    <p>Correlation is near zero (-0.03). But exchange listings and VC backing DO matter.</p>
+                </div>
+            </div>
+            <div class="insight-stats">
+                <div class="insight-stat">
+                    <div class="insight-stat-value negative" id="listedAvg">-11.4%</div>
+                    <div class="insight-stat-label">Binance Listed</div>
+                </div>
+                <div class="insight-stat">
+                    <div class="insight-stat-value positive" id="notListedAvg">-2.8%</div>
+                    <div class="insight-stat-label">Not Listed</div>
+                </div>
+                <div class="insight-stat">
+                    <div class="insight-stat-value negative" id="vcAvg">-11.8%</div>
+                    <div class="insight-stat-label">VC Backed</div>
+                </div>
+                <div class="insight-stat">
+                    <div class="insight-stat-value positive" id="retailAvg">-5.4%</div>
+                    <div class="insight-stat-label">Retail Only</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Primary Chart: Followers vs Market Cap -->
+        <div class="quadrant-section" style="margin-bottom: 24px;">
+            <div class="quadrant-header">
+                <div>
+                    <h2 class="quadrant-title">Social Reach vs Market Cap</h2>
+                    <p class="quadrant-subtitle">X: Twitter Followers (log) • Y: Market Cap (log) • Bubble size: 24h Volume • Color: Sector</p>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="primaryChart"></canvas>
+            </div>
+            <!-- Sector Legend (Clickable for filtering) -->
+            <div class="sector-legend" id="sectorLegend">
+                <div class="sector-legend-item active" data-sector="all">
+                    <span class="sector-legend-dot" style="background: linear-gradient(135deg, #F85149, #3FB950, #A371F7);"></span>
+                    <span>All</span>
+                </div>
+                <div class="sector-legend-item" data-sector="security">
+                    <span class="sector-legend-dot" style="background: #F85149;"></span>
+                    <span>Security</span>
+                </div>
+                <div class="sector-legend-item" data-sector="privacy">
+                    <span class="sector-legend-dot" style="background: #E040FB;"></span>
+                    <span>Privacy</span>
+                </div>
+                <div class="sector-legend-item" data-sector="defi">
+                    <span class="sector-legend-dot" style="background: #3FB950;"></span>
+                    <span>DeFi</span>
+                </div>
+                <div class="sector-legend-item" data-sector="ai-data">
+                    <span class="sector-legend-dot" style="background: #A371F7;"></span>
+                    <span>AI / Data</span>
+                </div>
+                <div class="sector-legend-item" data-sector="gaming">
+                    <span class="sector-legend-dot" style="background: #39C5CF;"></span>
+                    <span>Gaming</span>
+                </div>
+                <div class="sector-legend-item" data-sector="memes">
+                    <span class="sector-legend-dot" style="background: #F3BA2F;"></span>
+                    <span>Memes</span>
+                </div>
+                <div class="sector-legend-item" data-sector="infrastructure">
+                    <span class="sector-legend-dot" style="background: #58A6FF;"></span>
+                    <span>Infra</span>
+                </div>
+                <div class="sector-legend-item" data-sector="depin">
+                    <span class="sector-legend-dot" style="background: #D29922;"></span>
+                    <span>DePIN</span>
+                </div>
+                <div class="sector-legend-item" data-sector="rwa">
+                    <span class="sector-legend-dot" style="background: #00BCD4;"></span>
+                    <span>RWA</span>
+                </div>
+                <div class="sector-legend-item" data-sector="social">
+                    <span class="sector-legend-dot" style="background: #FF7043;"></span>
+                    <span>Social</span>
+                </div>
+                <div class="sector-legend-item" data-sector="other">
+                    <span class="sector-legend-dot" style="background: #7D8590;"></span>
+                    <span>Other</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Strategic Filters -->
+        <div class="strategic-filters">
+            <div class="strategic-filters-title">
+                <span>⚡</span> Strategic Filters
+            </div>
+            <div class="filter-grid">
+                <div class="filter-card">
+                    <div class="filter-card-header">
+                        <span class="filter-card-title">Exchange Listing</span>
+                        <span class="filter-card-insight negative">Listed: -11.4% avg</span>
+                    </div>
+                    <div class="filter-buttons" id="exchangeFilters">
+                        <button class="filter-btn active" data-exchange="all">All</button>
+                        <button class="filter-btn" data-exchange="listed">Binance Listed</button>
+                        <button class="filter-btn green" data-exchange="not-listed">Not Listed</button>
+                    </div>
+                </div>
+                <div class="filter-card">
+                    <div class="filter-card-header">
+                        <span class="filter-card-title">Investor Backing</span>
+                        <span class="filter-card-insight negative">VC: -11.8% avg</span>
+                    </div>
+                    <div class="filter-buttons" id="investorFilters">
+                        <button class="filter-btn active" data-investor="all">All</button>
+                        <button class="filter-btn" data-investor="vc">VC Backed</button>
+                        <button class="filter-btn green" data-investor="retail">Retail Only</button>
+                    </div>
+                </div>
+                <div class="filter-card">
+                    <div class="filter-card-header">
+                        <span class="filter-card-title">Timeframe</span>
+                    </div>
+                    <div class="filter-buttons" id="timeframeFilters">
+                        <button class="filter-btn active" data-timeframe="7d">7d</button>
+                        <button class="filter-btn" data-timeframe="30d">30d</button>
+                        <button class="filter-btn" data-timeframe="90d">90d</button>
+                    </div>
+                </div>
+                <div class="filter-card">
+                    <div class="filter-card-header">
+                        <span class="filter-card-title">Quadrant Filter</span>
+                    </div>
+                    <div class="filter-buttons" id="quadrantFilters">
+                        <button class="filter-btn active" data-quadrant="all">All</button>
+                        <button class="filter-btn" data-quadrant="hidden-gem">🎯 Hidden Gems</button>
+                        <button class="filter-btn" data-quadrant="validated">✅ Validated</button>
+                        <button class="filter-btn" data-quadrant="overvalued">⚠️ Overvalued</button>
+                    </div>
+                </div>
+                <div class="filter-card">
+                    <div class="filter-card-header">
+                        <span class="filter-card-title">Search</span>
+                    </div>
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search by token name or symbol...">
+                </div>
+            </div>
+        </div>
+
+        <!-- Quadrant Chart -->
+        <div class="quadrant-section">
+            <div class="quadrant-header">
+                <div>
+                    <h2 class="quadrant-title">Performance Quadrant Analysis</h2>
+                    <p class="quadrant-subtitle" id="quadrantSubtitle">X: Twitter Followers (log) • Y: 7d Performance (%) • Median followers: 84K</p>
+                </div>
+                <div class="quadrant-legend">
+                    <div class="legend-item hidden-gem"><span class="legend-icon">🎯</span> Hidden Gem (Buy)</div>
+                    <div class="legend-item validated"><span class="legend-icon">✅</span> Validated (Hold)</div>
+                    <div class="legend-item overvalued"><span class="legend-icon">⚠️</span> Overvalued (Sell)</div>
+                    <div class="legend-item struggling"><span class="legend-icon">❌</span> Struggling (Avoid)</div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="quadrantChart"></canvas>
+            </div>
+            <div class="quadrant-summary">
+                <div class="quadrant-card hidden-gem">
+                    <div class="quadrant-card-header">
+                        <span class="quadrant-card-title">🎯 Hidden Gems</span>
+                        <span class="quadrant-card-signal">BUY</span>
+                    </div>
+                    <div class="quadrant-card-count" id="hiddenGemCount">0</div>
+                    <div class="quadrant-card-avg positive" id="hiddenGemAvg">+0%</div>
+                </div>
+                <div class="quadrant-card validated">
+                    <div class="quadrant-card-header">
+                        <span class="quadrant-card-title">✅ Validated</span>
+                        <span class="quadrant-card-signal">HOLD</span>
+                    </div>
+                    <div class="quadrant-card-count" id="validatedCount">0</div>
+                    <div class="quadrant-card-avg positive" id="validatedAvg">+0%</div>
+                </div>
+                <div class="quadrant-card overvalued">
+                    <div class="quadrant-card-header">
+                        <span class="quadrant-card-title">⚠️ Overvalued</span>
+                        <span class="quadrant-card-signal">SELL</span>
+                    </div>
+                    <div class="quadrant-card-count" id="overvaluedCount">0</div>
+                    <div class="quadrant-card-avg negative" id="overvaluedAvg">-0%</div>
+                </div>
+                <div class="quadrant-card struggling">
+                    <div class="quadrant-card-header">
+                        <span class="quadrant-card-title">❌ Struggling</span>
+                        <span class="quadrant-card-signal">AVOID</span>
+                    </div>
+                    <div class="quadrant-card-count" id="strugglingCount">0</div>
+                    <div class="quadrant-card-avg negative" id="strugglingAvg">-0%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="table-section">
+            <div class="table-header">
+                <h2 class="table-title">Token Analysis</h2>
+                <div class="table-controls">
+                    <button class="table-control-btn" id="exportBtn">Export CSV</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th data-sort="symbol">Token <span class="sort-icon">↕</span></th>
+                            <th data-sort="sector">Sector <span class="sort-icon">↕</span></th>
+                            <th>Ecosystem</th>
+                            <th data-sort="price">Price <span class="sort-icon">↕</span></th>
+                            <th data-sort="market_cap">MCap <span class="sort-icon">↕</span></th>
+                            <th data-sort="twitter_followers">Followers <span class="sort-icon">↕</span></th>
+                            <th data-sort="percent_change_7d">7d % <span class="sort-icon">↕</span></th>
+                            <th data-sort="percent_change_30d">30d % <span class="sort-icon">↕</span></th>
+                            <th data-sort="percent_change_90d">90d % <span class="sort-icon">↕</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="9">
+                                <div class="loading">
+                                    <div class="loading-spinner"></div>
+                                    <span>Loading data...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination">
+                <div class="pagination-info" id="paginationInfo">Showing 0-0 of 0</div>
+                <div class="pagination-buttons">
+                    <button class="pagination-btn" id="prevBtn" disabled>← Previous</button>
+                    <button class="pagination-btn" id="nextBtn" disabled>Next →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Token Detail Modal -->
+        <div id="tokenModal" class="token-modal">
+            <div class="modal-overlay" onclick="closeTokenModal()"></div>
+            <div class="modal-content">
+                <button class="modal-close" onclick="closeTokenModal()">&times;</button>
+                <div class="modal-header">
+                    <div class="modal-logo" id="modalLogo"></div>
+                    <div class="modal-title-section">
+                        <h3 class="modal-symbol" id="modalSymbol"></h3>
+                        <p class="modal-name" id="modalName"></p>
+                    </div>
+                    <div class="modal-sector-badge" id="modalSector"></div>
+                </div>
+                <div class="modal-stats" id="modalStats"></div>
+                <div class="modal-ecosystems" id="modalEcosystems"></div>
+                <div class="modal-tags" id="modalTags"></div>
+                <p class="modal-description" id="modalDescription"></p>
+                <div class="modal-links" id="modalLinks"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - Exchange & Investor Tags
+        const EXCHANGE_TAGS = [
+            'binance-listing', 'binance-launchpool', 'binance-alpha',
+            'binance-hodler-airdrops', 'binance-wallet-ido', 'binance-megadrop',
+            'binance-launchpad'
+        ];
+
+        const INVESTOR_TAGS = [
+            'dwf-labs-portfolio', 'binance-labs-portfolio', 'animoca-brands-portfolio',
+            'coinbase-ventures-portfolio', 'pantera-capital-portfolio', 'a16z-portfolio',
+            'polychain-capital-portfolio', 'okx-ventures-portfolio', 'kenetic-capital-portfolio',
+            'arrington-xrp-capital-portfolio', 'hashkey-capital-portfolio', 'multicoin-capital-portfolio',
+            'three-arrows-capital-portfolio', 'alameda-research-portfolio', 'framework-ventures-portfolio',
+            'exnetwork-capital-portfolio', 'paradigm-portfolio', 'placeholder-ventures-portfolio',
+            'galaxy-digital-portfolio', 'huobi-capital-portfolio', 'fenbushi-capital-portfolio',
+            'blockchain-capital-portfolio', 'dragonfly-portfolio', 'electric-capital-portfolio',
+            'standard-crypto-portfolio', 'defiance-capital-portfolio', 'circle-ventures-portfolio'
+        ];
+
+        // Sector categories for bubble colors
+        // Security: cybersecurity protocols, auditing, threat detection (FORT, NCT, CTK)
+        // Privacy: privacy-focused chains and coins (separate from security)
+        const SECTOR_CATEGORIES = {
+            'security': {
+                color: '#F85149',
+                name: 'Security',
+                tags: ['cybersecurity']  // Only explicit security protocols: FORT, NCT, CTK, UTK
+            },
+            'privacy': {
+                color: '#E040FB',
+                name: 'Privacy',
+                tags: ['privacy', 'privacy-coins', 'privacy-blockchain', 'zero-knowledge-proofs']
+            },
+            'defi': {
+                color: '#3FB950',
+                name: 'DeFi',
+                tags: ['defi', 'decentralized-exchange-dex-token', 'lending-borowing', 'yield-farming', 'amm', 'derivatives', 'dex', 'perp-dex-coins', 'defai']
+            },
+            'ai-data': {
+                color: '#A371F7',
+                name: 'AI / Data',
+                tags: ['ai-big-data', 'ai-agents', 'ai-applications', 'generative-ai', 'oracles', 'data-availability', 'data-provenance']
+            },
+            'gaming': {
+                color: '#39C5CF',
+                name: 'Gaming',
+                tags: ['gaming', 'play-to-earn', 'metaverse', 'move-to-earn', 'collectibles-nfts']
+            },
+            'memes': {
+                color: '#F3BA2F',
+                name: 'Memes',
+                tags: ['memes', 'dog-themed-coins', 'cat-themed-coins', 'animal-memes', 'frog-themed-coins', 'ai-memes', 'ip-memes', 'political-memes']
+            },
+            'infrastructure': {
+                color: '#58A6FF',
+                name: 'Infra',
+                tags: ['layer-1', 'layer-2', 'interoperability', 'scaling', 'modular-blockchain', 'cross-chain', 'smart-contracts', 'platform']
+            },
+            'depin': {
+                color: '#D29922',
+                name: 'DePIN',
+                tags: ['depin', 'storage', 'distributed-computing', 'iot']
+            },
+            'rwa': {
+                color: '#00BCD4',
+                name: 'RWA',
+                tags: ['real-world-assets-protocols', 'tokenized-assets', 'tokenized-stock', 'stablecoin', 'usd-stablecoin']
+            },
+            'social': {
+                color: '#FF7043',
+                name: 'Social',
+                tags: ['communications-social-media', 'content-creation', 'media', 'fan-token', 'governance', 'dao']
+            },
+            'other': {
+                color: '#7D8590',
+                name: 'Other',
+                tags: []
+            }
+        };
+
+        // Ecosystem tags for multi-ecosystem detection
+        const ECOSYSTEM_TAGS = [
+            'ethereum-ecosystem', 'solana-ecosystem', 'bnb-chain-ecosystem',
+            'binance-ecosystem', 'base-ecosystem', 'arbitrum-ecosystem',
+            'polygon-ecosystem', 'avalanche-ecosystem', 'bitcoin-ecosystem', 'ton-ecosystem'
+        ];
+
+        const MEDIAN_FOLLOWERS = 84000;
+
+        // State
+        let allProjects = [];
+        let filteredProjects = [];
+        let currentPage = 1;
+        const pageSize = 50;
+        let sortColumn = 'percent_change_7d';
+        let sortDirection = 'desc';
+        let primaryChart = null;
+        let quadrantChart = null;
+
+        // Filters
+        let activeExchange = 'all';
+        let activeInvestor = 'all';
+        let activeQuadrant = 'all';
+        let activeTimeframe = '7d';
+        let activeSector = 'all';
+        let searchQuery = '';
+
+        // Utility functions
+        function formatNumber(num) {
+            if (num === null || num === undefined) return 'N/A';
+            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
+            return num.toLocaleString();
+        }
+
+        function formatPrice(price) {
+            if (price === null || price === undefined) return 'N/A';
+            if (price < 0.0001) return '$' + price.toExponential(2);
+            if (price < 1) return '$' + price.toFixed(4);
+            if (price < 100) return '$' + price.toFixed(2);
+            return '$' + formatNumber(price);
+        }
+
+        function formatPercent(percent) {
+            if (percent === null || percent === undefined) return 'N/A';
+            const sign = percent >= 0 ? '+' : '';
+            return sign + percent.toFixed(2) + '%';
+        }
+
+        function hasExchangeListing(tags) {
+            if (!tags || !Array.isArray(tags)) return false;
+            return tags.some(tag => EXCHANGE_TAGS.includes(tag));
+        }
+
+        function hasInvestorBacking(tags) {
+            if (!tags || !Array.isArray(tags)) return false;
+            return tags.some(tag => INVESTOR_TAGS.includes(tag));
+        }
+
+        function getProjectSector(tags) {
+            if (!tags || !Array.isArray(tags)) return 'other';
+            for (const [sector, config] of Object.entries(SECTOR_CATEGORIES)) {
+                if (sector === 'other') continue;
+                if (config.tags.some(t => tags.includes(t))) {
+                    return sector;
+                }
+            }
+            return 'other';
+        }
+
+        function getSectorColor(sector, alpha = 0.7) {
+            const color = SECTOR_CATEGORIES[sector]?.color || SECTOR_CATEGORIES.other.color;
+            // Convert hex to rgba
+            const hex = color.replace('#', '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        function getEcosystems(tags) {
+            if (!tags || !Array.isArray(tags)) return [];
+            return tags.filter(t => ECOSYSTEM_TAGS.includes(t));
+        }
+
+        function isMultiEcosystem(tags) {
+            return getEcosystems(tags).length > 1;
+        }
+
+        function formatEcosystemName(tag) {
+            return tag.replace('-ecosystem', '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        }
+
+        // Modal functions
+        function showTokenModal(project) {
+            const modal = document.getElementById('tokenModal');
+            const sectorConfig = SECTOR_CATEGORIES[project.sector] || SECTOR_CATEGORIES.other;
+
+            // Logo
+            const logoEl = document.getElementById('modalLogo');
+            if (project.logo) {
+                logoEl.innerHTML = `<img src="${project.logo}" alt="${project.label}" onerror="this.parentNode.textContent='${project.label?.slice(0,2) || '??'}'">`;
+            } else {
+                logoEl.textContent = project.label?.slice(0, 2) || '??';
+            }
+
+            // Title
+            document.getElementById('modalSymbol').textContent = project.label || 'Unknown';
+            document.getElementById('modalName').textContent = project.name || '';
+
+            // Sector badge
+            const sectorBadge = document.getElementById('modalSector');
+            sectorBadge.textContent = sectorConfig.name;
+            sectorBadge.style.background = getSectorColor(project.sector, 0.2);
+            sectorBadge.style.color = sectorConfig.color;
+            sectorBadge.style.border = `1px solid ${sectorConfig.color}`;
+
+            // Stats
+            document.getElementById('modalStats').innerHTML = `
+                <div class="modal-stat">
+                    <div class="modal-stat-value">$${formatNumber(project.marketCap)}</div>
+                    <div class="modal-stat-label">Market Cap</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-value">${formatNumber(project.followers)}</div>
+                    <div class="modal-stat-label">Followers</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-value ${(project.perf7d || 0) >= 0 ? 'positive' : 'negative'}">${formatPercent(project.perf7d)}</div>
+                    <div class="modal-stat-label">7d Change</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-value ${(project.perf30d || 0) >= 0 ? 'positive' : 'negative'}">${formatPercent(project.perf30d)}</div>
+                    <div class="modal-stat-label">30d Change</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-value ${(project.perf90d || 0) >= 0 ? 'positive' : 'negative'}">${formatPercent(project.perf90d)}</div>
+                    <div class="modal-stat-label">90d Change</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-value">${formatPrice(project.price)}</div>
+                    <div class="modal-stat-label">Price</div>
+                </div>
+            `;
+
+            // Ecosystems
+            const ecosystems = project.ecosystems || [];
+            if (ecosystems.length > 0) {
+                const multiClass = ecosystems.length > 1 ? 'multi' : '';
+                document.getElementById('modalEcosystems').innerHTML =
+                    (ecosystems.length > 1 ? '<span class="modal-ecosystem-badge multi">Multi-Chain</span>' : '') +
+                    ecosystems.map(e => `<span class="modal-ecosystem-badge">${formatEcosystemName(e)}</span>`).join('');
+            } else {
+                document.getElementById('modalEcosystems').innerHTML = '';
+            }
+
+            // Tags (top 10)
+            const tags = project.tags || [];
+            const displayTags = tags.slice(0, 10);
+            document.getElementById('modalTags').innerHTML = displayTags
+                .map(t => `<span class="modal-tag">${t}</span>`)
+                .join('');
+
+            // Description
+            const desc = project.description || 'No description available.';
+            document.getElementById('modalDescription').textContent = desc;
+
+            // Links
+            const links = [];
+            if (project.website) {
+                links.push(`<a href="${project.website}" target="_blank" class="modal-link">🌐 Website</a>`);
+            }
+            if (project.twitter) {
+                links.push(`<a href="${project.twitter}" target="_blank" class="modal-link">𝕏 Twitter</a>`);
+            }
+            document.getElementById('modalLinks').innerHTML = links.join('');
+
+            modal.classList.add('active');
+        }
+
+        function closeTokenModal() {
+            document.getElementById('tokenModal').classList.remove('active');
+        }
+
+        function showTokenModalFromTable(symbol) {
+            const project = filteredProjects.find(p => p.symbol === symbol);
+            if (project) {
+                showTokenModal({
+                    label: project.symbol,
+                    name: project.name,
+                    price: project.price,
+                    marketCap: project.market_cap,
+                    followers: project.twitter_followers,
+                    perf7d: project.percent_change_7d,
+                    perf30d: project.percent_change_30d,
+                    perf90d: project.percent_change_90d,
+                    sector: project.sector,
+                    ecosystems: project.ecosystems,
+                    isMultiEcosystem: project.isMultiEcosystem,
+                    description: project.description,
+                    website: project.website,
+                    twitter: project.twitter,
+                    logo: project.logo,
+                    tags: project.tags
+                });
+            }
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeTokenModal();
+        });
+
+        function getPerformanceField() {
+            const fields = { '7d': 'percent_change_7d', '30d': 'percent_change_30d', '90d': 'percent_change_90d' };
+            return fields[activeTimeframe] || 'percent_change_7d';
+        }
+
+        function getPerformance(project) {
+            return project[getPerformanceField()];
+        }
+
+        function getQuadrant(followers, perf) {
+            if (followers === null || perf === null || perf === undefined) return null;
+            const highFollowers = followers >= MEDIAN_FOLLOWERS;
+            const positive = perf >= 0;
+
+            if (!highFollowers && positive) return 'hidden-gem';
+            if (highFollowers && positive) return 'validated';
+            if (highFollowers && !positive) return 'overvalued';
+            return 'struggling';
+        }
+
+        function getQuadrantLabel(quadrant) {
+            const labels = {
+                'hidden-gem': '🎯 Hidden Gem',
+                'validated': '✅ Validated',
+                'overvalued': '⚠️ Overvalued',
+                'struggling': '❌ Struggling'
+            };
+            return labels[quadrant] || 'N/A';
+        }
+
+        function getQuadrantColor(quadrant) {
+            const colors = {
+                'hidden-gem': 'rgba(57, 197, 207, 0.8)',
+                'validated': 'rgba(63, 185, 80, 0.8)',
+                'overvalued': 'rgba(248, 81, 73, 0.8)',
+                'struggling': 'rgba(125, 133, 144, 0.6)'
+            };
+            return colors[quadrant] || 'rgba(125, 133, 144, 0.5)';
+        }
+
+        // Data processing
+        function processData(data) {
+            return data.projects.map(p => ({
+                ...p,
+                isListed: hasExchangeListing(p.tags),
+                hasVC: hasInvestorBacking(p.tags),
+                sector: getProjectSector(p.tags),
+                ecosystems: getEcosystems(p.tags),
+                isMultiEcosystem: isMultiEcosystem(p.tags)
+            }));
+        }
+
+        function getProjectQuadrant(p) {
+            return getQuadrant(p.twitter_followers, getPerformance(p));
+        }
+
+        function filterProjects() {
+            filteredProjects = allProjects.filter(p => {
+                // Exchange filter
+                if (activeExchange === 'listed' && !p.isListed) return false;
+                if (activeExchange === 'not-listed' && p.isListed) return false;
+
+                // Investor filter
+                if (activeInvestor === 'vc' && !p.hasVC) return false;
+                if (activeInvestor === 'retail' && p.hasVC) return false;
+
+                // Sector filter
+                if (activeSector !== 'all' && p.sector !== activeSector) return false;
+
+                // Quadrant filter (dynamic based on timeframe)
+                if (activeQuadrant !== 'all' && getProjectQuadrant(p) !== activeQuadrant) return false;
+
+                // Search
+                if (searchQuery) {
+                    const q = searchQuery.toLowerCase();
+                    if (!p.symbol?.toLowerCase().includes(q) && !p.name?.toLowerCase().includes(q)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            sortProjects();
+            currentPage = 1;
+            updateUI();
+        }
+
+        function sortProjects() {
+            filteredProjects.sort((a, b) => {
+                let aVal = a[sortColumn];
+                let bVal = b[sortColumn];
+
+                if (sortColumn === 'quadrant') {
+                    const order = { 'hidden-gem': 1, 'validated': 2, 'overvalued': 3, 'struggling': 4 };
+                    aVal = order[a.quadrant] || 5;
+                    bVal = order[b.quadrant] || 5;
+                }
+
+                if (aVal === null || aVal === undefined) return 1;
+                if (bVal === null || bVal === undefined) return -1;
+
+                if (typeof aVal === 'string') {
+                    return sortDirection === 'asc'
+                        ? aVal.localeCompare(bVal)
+                        : bVal.localeCompare(aVal);
+                }
+
+                return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+            });
+        }
+
+        // UI Updates
+        function updateUI() {
+            updateStats();
+            updatePrimaryChart();
+            updateQuadrantSummary();
+            updateQuadrantChart();
+            updateTable();
+        }
+
+        function updateStats() {
+            document.getElementById('totalTokens').textContent = formatNumber(allProjects.length);
+            document.getElementById('withTwitter').textContent = formatNumber(
+                allProjects.filter(p => p.twitter_followers).length
+            );
+
+            // Calculate averages
+            const listed = allProjects.filter(p => p.isListed && p.percent_change_7d !== null);
+            const notListed = allProjects.filter(p => !p.isListed && p.percent_change_7d !== null);
+            const vcBacked = allProjects.filter(p => p.hasVC && p.percent_change_7d !== null);
+            const retail = allProjects.filter(p => !p.hasVC && p.percent_change_7d !== null);
+
+            const avgListed = listed.length ? listed.reduce((s, p) => s + p.percent_change_7d, 0) / listed.length : 0;
+            const avgNotListed = notListed.length ? notListed.reduce((s, p) => s + p.percent_change_7d, 0) / notListed.length : 0;
+            const avgVC = vcBacked.length ? vcBacked.reduce((s, p) => s + p.percent_change_7d, 0) / vcBacked.length : 0;
+            const avgRetail = retail.length ? retail.reduce((s, p) => s + p.percent_change_7d, 0) / retail.length : 0;
+
+            document.getElementById('listedAvg').textContent = formatPercent(avgListed);
+            document.getElementById('notListedAvg').textContent = formatPercent(avgNotListed);
+            document.getElementById('vcAvg').textContent = formatPercent(avgVC);
+            document.getElementById('retailAvg').textContent = formatPercent(avgRetail);
+        }
+
+        function updateQuadrantSummary() {
+            const withData = filteredProjects.filter(p => getProjectQuadrant(p));
+            const perfField = getPerformanceField();
+
+            const quadrants = {
+                'hidden-gem': withData.filter(p => getProjectQuadrant(p) === 'hidden-gem'),
+                'validated': withData.filter(p => getProjectQuadrant(p) === 'validated'),
+                'overvalued': withData.filter(p => getProjectQuadrant(p) === 'overvalued'),
+                'struggling': withData.filter(p => getProjectQuadrant(p) === 'struggling')
+            };
+
+            function updateCard(key, idPrefix, projects) {
+                document.getElementById(idPrefix + 'Count').textContent = projects.length;
+                const avg = projects.length ? projects.reduce((s, p) => s + (p[perfField] || 0), 0) / projects.length : 0;
+                document.getElementById(idPrefix + 'Avg').textContent = formatPercent(avg);
+                document.getElementById(idPrefix + 'Avg').className = 'quadrant-card-avg ' + (avg >= 0 ? 'positive' : 'negative');
+            }
+
+            updateCard('hidden-gem', 'hiddenGem', quadrants['hidden-gem']);
+            updateCard('validated', 'validated', quadrants['validated']);
+            updateCard('overvalued', 'overvalued', quadrants['overvalued']);
+            updateCard('struggling', 'struggling', quadrants['struggling']);
+        }
+
+        function updatePrimaryChart() {
+            const ctx = document.getElementById('primaryChart').getContext('2d');
+
+            const chartData = filteredProjects
+                .filter(p => p.twitter_followers && p.market_cap)
+                .map(p => ({
+                    x: p.twitter_followers,
+                    y: p.market_cap,
+                    r: Math.max(4, Math.min(15, Math.log10(p.volume_24h || 1000) * 1.5)),
+                    label: p.symbol,
+                    name: p.name,
+                    price: p.price,
+                    marketCap: p.market_cap,
+                    followers: p.twitter_followers,
+                    volume: p.volume_24h,
+                    perf7d: p.percent_change_7d,
+                    perf30d: p.percent_change_30d,
+                    perf90d: p.percent_change_90d,
+                    isListed: p.isListed,
+                    hasVC: p.hasVC,
+                    sector: p.sector,
+                    ecosystems: p.ecosystems,
+                    isMultiEcosystem: p.isMultiEcosystem,
+                    description: p.description,
+                    website: p.website,
+                    twitter: p.twitter,
+                    logo: p.logo,
+                    tags: p.tags
+                }));
+
+            // Store chart data globally for click handler
+            window.primaryChartData = chartData;
+
+            if (primaryChart) primaryChart.destroy();
+
+            primaryChart = new Chart(ctx, {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'Tokens',
+                        data: chartData,
+                        backgroundColor: chartData.map(d => getSectorColor(d.sector, 0.6)),
+                        borderColor: chartData.map(d => getSectorColor(d.sector, 1)),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const dataIndex = elements[0].index;
+                            const project = chartData[dataIndex];
+                            showTokenModal(project);
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'logarithmic',
+                            title: { display: true, text: 'Twitter Followers', color: '#7d8590', font: { family: 'JetBrains Mono', size: 11 } },
+                            grid: { color: 'rgba(37, 45, 56, 0.5)' },
+                            ticks: { color: '#7d8590', font: { family: 'JetBrains Mono', size: 10 }, callback: (v) => formatNumber(v) }
+                        },
+                        y: {
+                            type: 'logarithmic',
+                            title: { display: true, text: 'Market Cap', color: '#7d8590', font: { family: 'JetBrains Mono', size: 11 } },
+                            grid: { color: 'rgba(37, 45, 56, 0.5)' },
+                            ticks: { color: '#7d8590', font: { family: 'JetBrains Mono', size: 10 }, callback: (v) => '$' + formatNumber(v) }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1a222c',
+                            titleColor: '#e6edf3',
+                            bodyColor: '#7d8590',
+                            borderColor: '#252d38',
+                            borderWidth: 1,
+                            padding: 12,
+                            titleFont: { family: 'JetBrains Mono', weight: '600' },
+                            bodyFont: { family: 'JetBrains Mono', size: 11 },
+                            callbacks: {
+                                title: (items) => items[0]?.raw?.label || '',
+                                label: (ctx) => {
+                                    const d = ctx.raw;
+                                    const sectorName = SECTOR_CATEGORIES[d.sector]?.name || 'Other';
+                                    return [
+                                        `Sector: ${sectorName}`,
+                                        `MCap: $${formatNumber(d.marketCap)}`,
+                                        `Followers: ${formatNumber(d.followers)}`,
+                                        `7d: ${formatPercent(d.perf7d)}`,
+                                        d.isMultiEcosystem ? `Multi-chain: ${d.ecosystems.map(formatEcosystemName).join(', ')}` : '',
+                                        `Click for details...`
+                                    ].filter(Boolean);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateQuadrantChart() {
+            const ctx = document.getElementById('quadrantChart').getContext('2d');
+            const perfField = getPerformanceField();
+
+            // Update subtitle
+            document.getElementById('quadrantSubtitle').textContent =
+                `X: Twitter Followers (log) • Y: ${activeTimeframe.toUpperCase()} Performance (%) • Median followers: 84K`;
+
+            const chartData = filteredProjects
+                .filter(p => p.twitter_followers && p[perfField] !== null && p[perfField] !== undefined)
+                .map(p => ({
+                    x: p.twitter_followers,
+                    y: p[perfField],
+                    r: Math.max(5, Math.min(20, Math.sqrt(p.market_cap || 0) / 2000)),
+                    label: p.symbol,
+                    name: p.name,
+                    quadrant: getProjectQuadrant(p),
+                    price: p.price,
+                    marketCap: p.market_cap,
+                    followers: p.twitter_followers,
+                    perf: p[perfField],
+                    isListed: p.isListed,
+                    hasVC: p.hasVC,
+                    sector: p.sector,
+                    description: p.description,
+                    website: p.website,
+                    twitter: p.twitter,
+                    logo: p.logo,
+                    ecosystems: p.ecosystems,
+                    isMultiEcosystem: p.isMultiEcosystem,
+                    tags: p.tags
+                }));
+
+            // Store chart data globally for click handler
+            window.quadrantChartData = chartData;
+
+            // Group by sector for colored datasets
+            const sectorGroups = Object.keys(SECTOR_CATEGORIES);
+            const datasets = sectorGroups.map(sector => ({
+                label: SECTOR_CATEGORIES[sector].name,
+                data: chartData.filter(d => d.sector === sector),
+                backgroundColor: getSectorColor(sector, 0.6),
+                borderColor: getSectorColor(sector, 1),
+                borderWidth: 1,
+                hoverBorderWidth: 3
+            })).filter(ds => ds.data.length > 0);
+
+            if (quadrantChart) quadrantChart.destroy();
+
+            quadrantChart = new Chart(ctx, {
+                type: 'bubble',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const datasetIndex = elements[0].datasetIndex;
+                            const dataIndex = elements[0].index;
+                            const project = quadrantChart.data.datasets[datasetIndex].data[dataIndex];
+                            showTokenModal(project);
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'logarithmic',
+                            title: {
+                                display: true,
+                                text: 'Twitter Followers',
+                                color: '#7d8590',
+                                font: { family: 'JetBrains Mono', size: 11 }
+                            },
+                            grid: { color: 'rgba(37, 45, 56, 0.5)' },
+                            ticks: {
+                                color: '#7d8590',
+                                font: { family: 'JetBrains Mono', size: 10 },
+                                callback: (v) => formatNumber(v)
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: activeTimeframe.toUpperCase() + ' Performance (%)',
+                                color: '#7d8590',
+                                font: { family: 'JetBrains Mono', size: 11 }
+                            },
+                            grid: { color: 'rgba(37, 45, 56, 0.5)' },
+                            ticks: {
+                                color: '#7d8590',
+                                font: { family: 'JetBrains Mono', size: 10 },
+                                callback: (v) => v + '%'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1a222c',
+                            titleColor: '#e6edf3',
+                            bodyColor: '#7d8590',
+                            borderColor: '#252d38',
+                            borderWidth: 1,
+                            padding: 12,
+                            titleFont: { family: 'JetBrains Mono', weight: '600' },
+                            bodyFont: { family: 'JetBrains Mono', size: 11 },
+                            callbacks: {
+                                title: (items) => items[0]?.raw?.label || '',
+                                label: (ctx) => {
+                                    const d = ctx.raw;
+                                    const sectorName = SECTOR_CATEGORIES[d.sector]?.name || 'Other';
+                                    return [
+                                        `Sector: ${sectorName}`,
+                                        `${activeTimeframe}: ${formatPercent(d.perf)}`,
+                                        `Followers: ${formatNumber(d.followers)}`,
+                                        `MCap: $${formatNumber(d.marketCap)}`,
+                                        d.isMultiEcosystem ? `Multi-chain: ${d.ecosystems.map(formatEcosystemName).join(', ')}` : '',
+                                        `Click for details...`
+                                    ].filter(Boolean);
+                                }
+                            }
+                        },
+                        annotation: {
+                            annotations: {
+                                // Quadrant backgrounds
+                                hiddenGemBox: {
+                                    type: 'box',
+                                    xMax: MEDIAN_FOLLOWERS,
+                                    yMin: 0,
+                                    backgroundColor: 'rgba(57, 197, 207, 0.06)',
+                                    borderWidth: 0
+                                },
+                                validatedBox: {
+                                    type: 'box',
+                                    xMin: MEDIAN_FOLLOWERS,
+                                    yMin: 0,
+                                    backgroundColor: 'rgba(63, 185, 80, 0.06)',
+                                    borderWidth: 0
+                                },
+                                overvaluedBox: {
+                                    type: 'box',
+                                    xMin: MEDIAN_FOLLOWERS,
+                                    yMax: 0,
+                                    backgroundColor: 'rgba(248, 81, 73, 0.06)',
+                                    borderWidth: 0
+                                },
+                                strugglingBox: {
+                                    type: 'box',
+                                    xMax: MEDIAN_FOLLOWERS,
+                                    yMax: 0,
+                                    backgroundColor: 'rgba(125, 133, 144, 0.04)',
+                                    borderWidth: 0
+                                },
+                                // Quadrant divider lines
+                                horizontalLine: {
+                                    type: 'line',
+                                    yMin: 0,
+                                    yMax: 0,
+                                    borderColor: 'rgba(125, 133, 144, 0.4)',
+                                    borderWidth: 2,
+                                    borderDash: [6, 4],
+                                    label: {
+                                        display: true,
+                                        content: '0% Performance',
+                                        position: 'end',
+                                        backgroundColor: 'rgba(21, 27, 35, 0.9)',
+                                        color: '#7d8590',
+                                        font: { family: 'JetBrains Mono', size: 9 },
+                                        padding: 4
+                                    }
+                                },
+                                verticalLine: {
+                                    type: 'line',
+                                    xMin: MEDIAN_FOLLOWERS,
+                                    xMax: MEDIAN_FOLLOWERS,
+                                    borderColor: 'rgba(125, 133, 144, 0.4)',
+                                    borderWidth: 2,
+                                    borderDash: [6, 4],
+                                    label: {
+                                        display: true,
+                                        content: '84K Median',
+                                        position: 'start',
+                                        backgroundColor: 'rgba(21, 27, 35, 0.9)',
+                                        color: '#7d8590',
+                                        font: { family: 'JetBrains Mono', size: 9 },
+                                        padding: 4
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTable() {
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const pageData = filteredProjects.slice(start, end);
+
+            const tbody = document.getElementById('tableBody');
+
+            if (pageData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">🔍</div>
+                                <p>No tokens found matching your filters</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = pageData.map(p => {
+                const sectorConfig = SECTOR_CATEGORIES[p.sector] || SECTOR_CATEGORIES.other;
+                const ecosystems = p.ecosystems || [];
+                const ecosystemBadges = ecosystems.length > 0
+                    ? (ecosystems.length > 1 ? '<span class="badge multi-eco">Multi</span>' : '') +
+                      ecosystems.slice(0, 2).map(e => `<span class="badge eco">${formatEcosystemName(e).slice(0, 3)}</span>`).join('')
+                    : '—';
+
+                return `
+                    <tr style="cursor: pointer;" onclick="showTokenModalFromTable('${p.symbol}')">
+                        <td>
+                            <div class="token-cell">
+                                <div class="token-logo">
+                                    ${p.logo ? `<img src="${p.logo}" alt="${p.symbol}" onerror="this.style.display='none'; this.parentNode.textContent='${p.symbol.slice(0,2)}'">` : p.symbol.slice(0,2)}
+                                </div>
+                                <div class="token-info">
+                                    <span class="token-symbol">${p.symbol}</span>
+                                    <span class="token-name">${p.name?.slice(0, 18)}${p.name?.length > 18 ? '...' : ''}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="sector-badge" style="background: ${getSectorColor(p.sector, 0.2)}; color: ${sectorConfig.color}; border: 1px solid ${sectorConfig.color};">${sectorConfig.name}</span></td>
+                        <td>${ecosystemBadges}</td>
+                        <td>${formatPrice(p.price)}</td>
+                        <td>$${formatNumber(p.market_cap)}</td>
+                        <td>${p.twitter_followers ? formatNumber(p.twitter_followers) : 'N/A'}</td>
+                        <td class="${(p.percent_change_7d || 0) >= 0 ? 'change-positive' : 'change-negative'}">${formatPercent(p.percent_change_7d)}</td>
+                        <td class="${(p.percent_change_30d || 0) >= 0 ? 'change-positive' : 'change-negative'}">${formatPercent(p.percent_change_30d)}</td>
+                        <td class="${(p.percent_change_90d || 0) >= 0 ? 'change-positive' : 'change-negative'}">${formatPercent(p.percent_change_90d)}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Update pagination
+            document.getElementById('paginationInfo').textContent =
+                `Showing ${start + 1}-${Math.min(end, filteredProjects.length)} of ${filteredProjects.length}`;
+            document.getElementById('prevBtn').disabled = currentPage === 1;
+            document.getElementById('nextBtn').disabled = end >= filteredProjects.length;
+
+            // Update sort indicators
+            document.querySelectorAll('th').forEach(th => {
+                th.classList.remove('sorted');
+                if (th.dataset.sort === sortColumn) {
+                    th.classList.add('sorted');
+                    const icon = th.querySelector('.sort-icon');
+                    if (icon) icon.textContent = sortDirection === 'asc' ? '↑' : '↓';
+                } else {
+                    const icon = th.querySelector('.sort-icon');
+                    if (icon) icon.textContent = '↕';
+                }
+            });
+        }
+
+        // Event listeners
+        function setupEventListeners() {
+            // Exchange filters
+            document.querySelectorAll('#exchangeFilters .filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#exchangeFilters .filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    activeExchange = btn.dataset.exchange;
+                    filterProjects();
+                });
+            });
+
+            // Investor filters
+            document.querySelectorAll('#investorFilters .filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#investorFilters .filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    activeInvestor = btn.dataset.investor;
+                    filterProjects();
+                });
+            });
+
+            // Timeframe filters
+            document.querySelectorAll('#timeframeFilters .filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#timeframeFilters .filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    activeTimeframe = btn.dataset.timeframe;
+                    filterProjects();
+                });
+            });
+
+            // Quadrant filters
+            document.querySelectorAll('#quadrantFilters .filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#quadrantFilters .filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    activeQuadrant = btn.dataset.quadrant;
+                    filterProjects();
+                });
+            });
+
+            // Sector legend filters (clickable)
+            document.querySelectorAll('#sectorLegend .sector-legend-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('#sectorLegend .sector-legend-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    activeSector = item.dataset.sector;
+                    filterProjects();
+                });
+            });
+
+            // Search
+            let searchTimeout;
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    searchQuery = e.target.value;
+                    filterProjects();
+                }, 300);
+            });
+
+            // Table sorting
+            document.querySelectorAll('th[data-sort]').forEach(th => {
+                th.addEventListener('click', () => {
+                    const col = th.dataset.sort;
+                    if (sortColumn === col) {
+                        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        sortColumn = col;
+                        sortDirection = 'desc';
+                    }
+                    sortProjects();
+                    updateTable();
+                });
+            });
+
+            // Pagination
+            document.getElementById('prevBtn').addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updateTable();
+                }
+            });
+
+            document.getElementById('nextBtn').addEventListener('click', () => {
+                if (currentPage * pageSize < filteredProjects.length) {
+                    currentPage++;
+                    updateTable();
+                }
+            });
+
+            // Export CSV
+            document.getElementById('exportBtn').addEventListener('click', () => {
+                const headers = ['Symbol', 'Name', 'Quadrant', 'Listed', 'VC', 'Price', 'Market Cap', 'Followers', '7d Change', '30d Change', '90d Change'];
+                const rows = filteredProjects.map(p => [
+                    p.symbol,
+                    p.name,
+                    getProjectQuadrant(p) || 'N/A',
+                    p.isListed ? 'Yes' : 'No',
+                    p.hasVC ? 'Yes' : 'No',
+                    p.price,
+                    p.market_cap,
+                    p.twitter_followers,
+                    p.percent_change_7d?.toFixed(2),
+                    p.percent_change_30d?.toFixed(2),
+                    p.percent_change_90d?.toFixed(2)
+                ]);
+
+                const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'crypto_quadrant_analysis.csv';
+                a.click();
+            });
+        }
+
+        // Initialize
+        async function init() {
+            try {
+                const response = await fetch('crypto_projects_with_followers.json');
+                const data = await response.json();
+                allProjects = processData(data);
+                filteredProjects = [...allProjects];
+                sortProjects();
+                updateUI();
+                setupEventListeners();
+            } catch (error) {
+                console.error('Failed to load data:', error);
+                document.getElementById('tableBody').innerHTML = `
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">⚠️</div>
+                                <p>Failed to load data. Run: python3 -m http.server 8080</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
