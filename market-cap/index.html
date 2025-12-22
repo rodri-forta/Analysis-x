@@ -2356,21 +2356,43 @@
                 allProjects.filter(p => p.twitter_followers).length
             );
 
-            // Calculate averages
-            const listed = allProjects.filter(p => p.isListed && p.percent_change_7d !== null);
-            const notListed = allProjects.filter(p => !p.isListed && p.percent_change_7d !== null);
-            const vcBacked = allProjects.filter(p => p.hasVC && p.percent_change_7d !== null);
-            const retail = allProjects.filter(p => !p.hasVC && p.percent_change_7d !== null);
+            // Calculate averages based on active timeframe (with IQR outlier removal)
+            const perfField = getPerformanceField();
+            const hasValidPerf = p => p[perfField] != null && !isNaN(p[perfField]);
 
-            const avgListed = listed.length ? listed.reduce((s, p) => s + p.percent_change_7d, 0) / listed.length : 0;
-            const avgNotListed = notListed.length ? notListed.reduce((s, p) => s + p.percent_change_7d, 0) / notListed.length : 0;
-            const avgVC = vcBacked.length ? vcBacked.reduce((s, p) => s + p.percent_change_7d, 0) / vcBacked.length : 0;
-            const avgRetail = retail.length ? retail.reduce((s, p) => s + p.percent_change_7d, 0) / retail.length : 0;
+            // IQR outlier removal function
+            function removeOutliersIQR(values) {
+                if (values.length < 4) return values;
+                const sorted = [...values].sort((a, b) => a - b);
+                const q1 = sorted[Math.floor(sorted.length * 0.25)];
+                const q3 = sorted[Math.floor(sorted.length * 0.75)];
+                const iqr = q3 - q1;
+                const lower = q1 - 1.5 * iqr;
+                const upper = q3 + 1.5 * iqr;
+                return values.filter(v => v >= lower && v <= upper);
+            }
+
+            // Get values and remove outliers
+            const listedVals = removeOutliersIQR(allProjects.filter(p => p.isListed && hasValidPerf(p)).map(p => p[perfField]));
+            const notListedVals = removeOutliersIQR(allProjects.filter(p => !p.isListed && hasValidPerf(p)).map(p => p[perfField]));
+            const vcVals = removeOutliersIQR(allProjects.filter(p => p.hasVC && hasValidPerf(p)).map(p => p[perfField]));
+            const retailVals = removeOutliersIQR(allProjects.filter(p => !p.hasVC && hasValidPerf(p)).map(p => p[perfField]));
+
+            const avgListed = listedVals.length ? listedVals.reduce((s, v) => s + v, 0) / listedVals.length : 0;
+            const avgNotListed = notListedVals.length ? notListedVals.reduce((s, v) => s + v, 0) / notListedVals.length : 0;
+            const avgVC = vcVals.length ? vcVals.reduce((s, v) => s + v, 0) / vcVals.length : 0;
+            const avgRetail = retailVals.length ? retailVals.reduce((s, v) => s + v, 0) / retailVals.length : 0;
 
             document.getElementById('listedAvg').textContent = formatPercent(avgListed);
             document.getElementById('notListedAvg').textContent = formatPercent(avgNotListed);
             document.getElementById('vcAvg').textContent = formatPercent(avgVC);
             document.getElementById('retailAvg').textContent = formatPercent(avgRetail);
+
+            // Update positive/negative classes
+            document.getElementById('listedAvg').className = `insight-stat-value ${avgListed >= 0 ? 'positive' : 'negative'}`;
+            document.getElementById('notListedAvg').className = `insight-stat-value ${avgNotListed >= 0 ? 'positive' : 'negative'}`;
+            document.getElementById('vcAvg').className = `insight-stat-value ${avgVC >= 0 ? 'positive' : 'negative'}`;
+            document.getElementById('retailAvg').className = `insight-stat-value ${avgRetail >= 0 ? 'positive' : 'negative'}`;
         }
 
         function updateQuadrantSummary() {
