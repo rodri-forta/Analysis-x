@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sanctions Monitor — Ethereum</title>
+
+    <!-- Social / OG Meta -->
+    <meta property="og:title" content="&#8203;" />
+    <meta property="og:description" content="OFAC, EU & UK sanctioned addresses activity on Ethereum Mainnet — $2.81B across 78 addresses" />
+    <meta property="og:image" content="https://rodri-forta.github.io/Analysis-x/mainnet-sanctioned-addresses/og-recap-2025.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="600" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://rodri-forta.github.io/Analysis-x/mainnet-sanctioned-addresses/og-recap-2025.png" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'display': ['Space Grotesk', 'sans-serif'],
+                        'sans': ['DM Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        'surface': {
+                            50: '#fafbfc',
+                            100: '#f3f4f6',
+                            200: '#e8eaed',
+                            300: '#d1d5db',
+                        },
+                        'ink': {
+                            900: '#0f1115',
+                            800: '#1e2028',
+                            700: '#363842',
+                            600: '#52555e',
+                            500: '#6e717a',
+                            400: '#9094a0',
+                        },
+                        'accent': {
+                            cyan: '#0891b2',
+                            blue: '#2563eb',
+                            purple: '#7c3aed',
+                        },
+                        'warning': {
+                            amber: '#d97706',
+                            orange: '#ea580c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(160deg, #ffffff 0%, #f3f4f8 40%, #eef0f5 100%);
+        }
+        .light-card {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow:
+                0 1px 2px rgba(0, 0, 0, 0.04),
+                0 4px 16px rgba(0, 0, 0, 0.04);
+        }
+        .light-card-elevated {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow:
+                0 1px 3px rgba(0, 0, 0, 0.05),
+                0 8px 32px rgba(0, 0, 0, 0.06);
+        }
+        .glow-cyan {
+            box-shadow:
+                0 1px 3px rgba(0, 0, 0, 0.05),
+                0 8px 32px rgba(8, 145, 178, 0.1);
+        }
+        .glow-amber {
+            box-shadow:
+                0 1px 3px rgba(0, 0, 0, 0.05),
+                0 8px 32px rgba(217, 119, 6, 0.08);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #0891b2 0%, #2563eb 50%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .animate-count {
+            animation: countUp 1.5s ease-out forwards;
+        }
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, #0891b2 0%, #2563eb 100%);
+        }
+        .fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .hover-lift {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.06),
+                0 12px 40px rgba(8, 145, 178, 0.08);
+        }
+        .pill-badge {
+            background: rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-ink-900 font-sans">
+    <!-- Background decoration -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-accent-cyan/[0.04] rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-accent-purple/[0.04] rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="relative z-10 max-w-6xl mx-auto px-4 py-12 md:py-20">
+        <!-- Header -->
+        <header class="text-center mb-16">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full pill-badge mb-6">
+                <i data-lucide="shield-alert" class="w-4 h-4 text-warning-amber"></i>
+                <span class="text-sm text-ink-500">Ethereum Mainnet</span>
+            </div>
+            <h1 class="font-display text-5xl md:text-7xl font-bold mb-4">
+                <span class="gradient-text">Sanctions</span>
+                <span class="text-ink-900"> Monitor</span>
+            </h1>
+            <p class="text-ink-500 text-lg max-w-2xl mx-auto">
+                OFAC, EU and UK sanctioned addresses activity on Ethereum Mainnet
+                <br><span class="text-ink-400">July 2015 to January 2026</span>
+            </p>
+        </header>
+
+        <!-- Hero Stats -->
+        <section class="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6 mb-12">
+            <!-- Total Volume -->
+            <div class="light-card-elevated rounded-2xl p-6 md:p-8 text-center hover-lift glow-cyan">
+                <div class="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl bg-accent-cyan/10 mb-3 md:mb-4">
+                    <i data-lucide="dollar-sign" class="w-5 h-5 md:w-6 md:h-6 text-accent-cyan"></i>
+                </div>
+                <div class="font-display text-3xl md:text-5xl font-bold text-ink-900 mb-1 md:mb-2" title="$2,812,944,734 USD">
+                    $2.81B
+                </div>
+                <div class="text-ink-500 text-xs md:text-sm uppercase tracking-wider">Total Volume</div>
+                <div class="text-ink-400 text-xs mt-1 hidden md:block">$2,812,944,734 USD</div>
+            </div>
+
+            <!-- Total Transactions -->
+            <div class="light-card rounded-2xl p-6 md:p-8 text-center hover-lift">
+                <div class="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl bg-accent-blue/10 mb-3 md:mb-4">
+                    <i data-lucide="arrow-left-right" class="w-5 h-5 md:w-6 md:h-6 text-accent-blue"></i>
+                </div>
+                <div class="font-display text-3xl md:text-5xl font-bold text-ink-900 mb-1 md:mb-2">
+                    89,660
+                </div>
+                <div class="text-ink-500 text-xs md:text-sm uppercase tracking-wider">Transactions</div>
+                <div class="text-ink-400 text-xs mt-1 hidden md:block">Total on-chain txs</div>
+            </div>
+
+            <!-- OFAC Direct Addresses -->
+            <div class="light-card-elevated rounded-2xl p-6 md:p-8 text-center hover-lift glow-amber">
+                <div class="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl bg-warning-amber/10 mb-3 md:mb-4">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 md:w-6 md:h-6 text-warning-amber"></i>
+                </div>
+                <div class="font-display text-3xl md:text-5xl font-bold text-ink-900 mb-1 md:mb-2">
+                    78
+                </div>
+                <div class="text-ink-500 text-xs md:text-sm uppercase tracking-wider">OFAC Direct</div>
+                <div class="text-ink-400 text-xs mt-1 hidden md:block">Sanctioned addresses</div>
+            </div>
+
+            <!-- Counterparties -->
+            <div class="light-card rounded-2xl p-6 md:p-8 text-center hover-lift">
+                <div class="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl bg-accent-purple/10 mb-3 md:mb-4">
+                    <i data-lucide="users" class="w-5 h-5 md:w-6 md:h-6 text-accent-purple"></i>
+                </div>
+                <div class="font-display text-3xl md:text-5xl font-bold text-ink-900 mb-1 md:mb-2">
+                    10,978
+                </div>
+                <div class="text-ink-500 text-xs md:text-sm uppercase tracking-wider">Counterparties</div>
+                <div class="text-ink-400 text-xs mt-1 hidden md:block">Wallets transacting with OFAC</div>
+            </div>
+
+            <!-- ETH Volume -->
+            <div class="light-card rounded-2xl p-6 md:p-8 text-center hover-lift col-span-2 md:col-span-1">
+                <div class="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl bg-blue-500/10 mb-3 md:mb-4">
+                    <i data-lucide="diamond" class="w-5 h-5 md:w-6 md:h-6 text-blue-500"></i>
+                </div>
+                <div class="font-display text-3xl md:text-5xl font-bold text-ink-900 mb-1 md:mb-2" title="526,536.34 ETH">
+                    526K
+                </div>
+                <div class="text-ink-500 text-xs md:text-sm uppercase tracking-wider">ETH Moved</div>
+                <div class="text-ink-400 text-xs mt-1 hidden md:block">526,536 ETH total</div>
+            </div>
+        </section>
+
+        <!-- Terminology Explainer -->
+        <section class="mb-12">
+            <div class="light-card rounded-2xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <i data-lucide="info" class="w-5 h-5 text-accent-cyan"></i>
+                    <h3 class="font-display text-lg font-semibold text-ink-900">What do these terms mean?</h3>
+                </div>
+                <div class="grid grid-cols-1 gap-4 text-sm">
+                    <div class="flex items-start gap-3">
+                        <div class="w-3 h-3 rounded-full bg-warning-amber mt-1.5 flex-shrink-0"></div>
+                        <div>
+                            <span class="text-ink-900 font-medium">Sanctioned Addresses</span>
+                            <p class="text-ink-500">Addresses sanctioned by the U.S. Treasury (OFAC), the European Union (EU), and the United Kingdom (UK). This report covers direct on-chain activity of these addresses only.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Volume by Token -->
+        <section class="mb-12">
+            <h2 class="font-display text-2xl font-semibold text-ink-900 mb-6 flex items-center gap-3">
+                <i data-lucide="coins" class="w-6 h-6 text-accent-cyan"></i>
+                Volume by Token
+            </h2>
+            <div class="light-card rounded-2xl p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Token List -->
+                    <div class="space-y-4">
+                        <!-- ETH -->
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                                <span class="text-blue-600 font-bold text-sm">ETH</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-baseline mb-1">
+                                    <span class="text-ink-900 font-medium">Ether</span>
+                                    <span class="font-display font-bold text-ink-900">$1.19B</span>
+                                </div>
+                                <div class="h-2 bg-surface-200 rounded-full overflow-hidden">
+                                    <div class="h-full bg-blue-500 rounded-full" style="width: 42.1%"></div>
+                                </div>
+                                <div class="text-xs text-ink-400 mt-1">42.1% of total volume</div>
+                            </div>
+                        </div>
+                        <!-- USDT -->
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                                <span class="text-green-600 font-bold text-sm">USDT</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-baseline mb-1">
+                                    <span class="text-ink-900 font-medium">Tether USD</span>
+                                    <span class="font-display font-bold text-ink-900">$1.52B</span>
+                                </div>
+                                <div class="h-2 bg-surface-200 rounded-full overflow-hidden">
+                                    <div class="h-full bg-green-500 rounded-full" style="width: 54.0%"></div>
+                                </div>
+                                <div class="text-xs text-ink-400 mt-1">54.0% of total volume</div>
+                            </div>
+                        </div>
+                        <!-- USDC -->
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-blue-400/10 flex items-center justify-center flex-shrink-0">
+                                <span class="text-blue-500 font-bold text-sm">USDC</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-baseline mb-1">
+                                    <span class="text-ink-900 font-medium">USD Coin</span>
+                                    <span class="font-display font-bold text-ink-900">$102.4M</span>
+                                </div>
+                                <div class="h-2 bg-surface-200 rounded-full overflow-hidden">
+                                    <div class="h-full bg-blue-400 rounded-full" style="width: 3.6%"></div>
+                                </div>
+                                <div class="text-xs text-ink-400 mt-1">3.6% of total volume</div>
+                            </div>
+                        </div>
+                        <!-- DAI -->
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-yellow-500/10 flex items-center justify-center flex-shrink-0">
+                                <span class="text-yellow-600 font-bold text-sm">DAI</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-baseline mb-1">
+                                    <span class="text-ink-900 font-medium">Dai Stablecoin</span>
+                                    <span class="font-display font-bold text-ink-900">$5.1M</span>
+                                </div>
+                                <div class="h-2 bg-surface-200 rounded-full overflow-hidden">
+                                    <div class="h-full bg-yellow-500 rounded-full" style="width: 0.2%"></div>
+                                </div>
+                                <div class="text-xs text-ink-400 mt-1">0.2% of total volume</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Summary Stats -->
+                    <div class="flex flex-col justify-center">
+                        <div class="rounded-xl p-6 bg-surface-100 border border-surface-200">
+                            <h4 class="text-ink-500 text-sm uppercase tracking-wider mb-4">Key Insights</h4>
+                            <ul class="space-y-3 text-sm">
+                                <li class="flex items-start gap-2">
+                                    <i data-lucide="trending-up" class="w-4 h-4 text-accent-cyan mt-0.5 flex-shrink-0"></i>
+                                    <span class="text-ink-600"><span class="text-ink-900 font-medium">96.1%</span> of volume is in ETH + USDT</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <i data-lucide="shield" class="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0"></i>
+                                    <span class="text-ink-600"><span class="text-ink-900 font-medium">Stablecoins</span> (USDT, USDC, DAI) = 57.9%</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <i data-lucide="activity" class="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0"></i>
+                                    <span class="text-ink-600"><span class="text-ink-900 font-medium">Native ETH</span> = 42.1% of transfers</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <i data-lucide="layers" class="w-4 h-4 text-ink-400 mt-0.5 flex-shrink-0"></i>
+                                    <span class="text-ink-600"><span class="text-ink-900 font-medium">Other tokens</span> (WETH, WBTC, etc.) &lt; 1%</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Address Activity -->
+        <section class="mb-12">
+            <h2 class="font-display text-2xl font-semibold text-ink-900 mb-6 flex items-center gap-3">
+                <i data-lucide="git-branch" class="w-6 h-6 text-accent-cyan"></i>
+                Address Activity
+            </h2>
+            <div class="light-card rounded-2xl p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                    <!-- Sanctioned -->
+                    <div class="text-center p-6 rounded-xl bg-warning-amber/[0.05] border border-warning-amber/15">
+                        <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-warning-amber/10 mb-4">
+                            <i data-lucide="shield-alert" class="w-7 h-7 text-warning-amber"></i>
+                        </div>
+                        <div class="font-display text-3xl font-bold text-ink-900 mb-1">78</div>
+                        <div class="text-warning-amber text-sm font-medium mb-3">Sanctioned</div>
+                        <div class="text-ink-500 text-xs">Avg <span class="text-ink-900 font-medium">1,149</span> txs / address</div>
+                    </div>
+                    <!-- Isometric Connector -->
+                    <div class="flex flex-col items-center justify-center py-4">
+                        <svg viewBox="0 0 200 120" class="w-full max-w-[200px] h-auto" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Connection lines -->
+                            <line x1="30" y1="30" x2="170" y2="40" stroke="rgba(217,119,6,0.25)" stroke-width="1"/>
+                            <line x1="30" y1="50" x2="170" y2="50" stroke="rgba(8,145,178,0.35)" stroke-width="1.5"/>
+                            <line x1="30" y1="70" x2="170" y2="60" stroke="rgba(217,119,6,0.25)" stroke-width="1"/>
+                            <line x1="30" y1="90" x2="170" y2="70" stroke="rgba(8,145,178,0.18)" stroke-width="1"/>
+                            <line x1="30" y1="40" x2="170" y2="80" stroke="rgba(8,145,178,0.18)" stroke-width="1"/>
+                            <line x1="30" y1="60" x2="170" y2="90" stroke="rgba(217,119,6,0.15)" stroke-width="1"/>
+                            <!-- Sanctioned nodes (left) -->
+                            <circle cx="30" cy="30" r="5" fill="#d97706" opacity="0.85"/>
+                            <circle cx="30" cy="50" r="7" fill="#d97706" opacity="0.95"/>
+                            <circle cx="30" cy="70" r="4" fill="#d97706" opacity="0.75"/>
+                            <circle cx="30" cy="90" r="3" fill="#d97706" opacity="0.65"/>
+                            <circle cx="30" cy="40" r="3" fill="#d97706" opacity="0.55"/>
+                            <circle cx="30" cy="60" r="3" fill="#d97706" opacity="0.55"/>
+                            <!-- Counterparty nodes (right) -->
+                            <circle cx="170" cy="40" r="4" fill="#0891b2" opacity="0.65"/>
+                            <circle cx="170" cy="50" r="5" fill="#0891b2" opacity="0.75"/>
+                            <circle cx="170" cy="60" r="3" fill="#0891b2" opacity="0.55"/>
+                            <circle cx="170" cy="70" r="3" fill="#0891b2" opacity="0.55"/>
+                            <circle cx="170" cy="80" r="4" fill="#0891b2" opacity="0.65"/>
+                            <circle cx="170" cy="90" r="3" fill="#0891b2" opacity="0.45"/>
+                            <circle cx="170" cy="30" r="2" fill="#0891b2" opacity="0.35"/>
+                            <circle cx="170" cy="100" r="2" fill="#0891b2" opacity="0.35"/>
+                        </svg>
+                        <div class="text-ink-400 text-xs mt-2">Direct interactions</div>
+                    </div>
+                    <!-- Counterparties -->
+                    <div class="text-center p-6 rounded-xl bg-accent-cyan/[0.04] border border-accent-cyan/10">
+                        <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-accent-cyan/10 mb-4">
+                            <i data-lucide="users" class="w-7 h-7 text-accent-cyan"></i>
+                        </div>
+                        <div class="font-display text-3xl font-bold text-ink-900 mb-1">10,978</div>
+                        <div class="text-accent-cyan text-sm font-medium mb-3">Counterparties</div>
+                        <div class="text-ink-500 text-xs">Avg <span class="text-ink-900 font-medium">8</span> txs / address</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Top Sanctioned Addresses -->
+        <section>
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                <h2 class="font-display text-2xl font-semibold text-ink-900 flex items-center gap-3">
+                    <i data-lucide="alert-triangle" class="w-6 h-6 text-warning-amber"></i>
+                    Top Sanctioned Addresses
+                </h2>
+                <div class="text-xs text-ink-400 pill-badge px-3 py-1.5 rounded-lg">
+                    <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
+                    By on-chain volume
+                </div>
+            </div>
+            <div class="light-card-elevated rounded-2xl overflow-hidden glow-amber">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-black/[0.06]">
+                                <th class="text-left py-4 px-4 md:px-6 text-xs text-ink-400 uppercase tracking-wider font-medium">#</th>
+                                <th class="text-left py-4 px-4 md:px-6 text-xs text-ink-400 uppercase tracking-wider font-medium">Address</th>
+                                <th class="text-left py-4 px-4 md:px-6 text-xs text-ink-400 uppercase tracking-wider font-medium hidden md:table-cell">Label</th>
+                                <th class="text-right py-4 px-4 md:px-6 text-xs text-ink-400 uppercase tracking-wider font-medium">Volume</th>
+                                <th class="text-right py-4 px-4 md:px-6 text-xs text-ink-400 uppercase tracking-wider font-medium hidden md:table-cell">Txs</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Top 3 with labels -->
+                            <tr class="border-b border-black/[0.04] hover:bg-black/[0.015] transition-colors">
+                                <td class="py-3 px-4 md:px-6"><span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-warning-amber/15 text-warning-amber text-xs font-bold">1</span></td>
+                                <td class="py-3 px-4 md:px-6">
+                                    <a href="https://etherscan.io/address/0x098b716b8aaf21512996dc57eb0615e2383e2f96" target="_blank" class="font-mono text-xs md:text-sm text-accent-blue hover:underline">0x098b...e2f96</a>
+                                    <div class="text-xs text-warning-amber mt-0.5 md:hidden">Ronin Bridge Exploiter</div>
+                                </td>
+                                <td class="py-3 px-4 md:px-6 hidden md:table-cell"><span class="text-xs text-warning-amber bg-warning-amber/10 px-2 py-1 rounded">Ronin Bridge Exploiter</span></td>
+                                <td class="py-3 px-4 md:px-6 text-right font-display font-semibold text-ink-900">$480.7M</td>
+                                <td class="py-3 px-4 md:px-6 text-right text-ink-500 hidden md:table-cell">1,886</td>
+                            </tr>
+                            <tr class="border-b border-black/[0.04] hover:bg-black/[0.015] transition-colors">
+                                <td class="py-3 px-4 md:px-6"><span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-surface-200 text-ink-600 text-xs font-bold">2</span></td>
+                                <td class="py-3 px-4 md:px-6">
+                                    <a href="https://etherscan.io/address/0x19aa5fe80d33a56d56c78e82ea5e50e5d80b4dff" target="_blank" class="font-mono text-xs md:text-sm text-accent-blue hover:underline">0x19aa...b4dff</a>
+                                    <div class="text-xs text-warning-amber mt-0.5 md:hidden">SUEX OTC Broker</div>
+                                </td>
+                                <td class="py-3 px-4 md:px-6 hidden md:table-cell"><span class="text-xs text-warning-amber bg-warning-amber/10 px-2 py-1 rounded">SUEX OTC Broker</span></td>
+                                <td class="py-3 px-4 md:px-6 text-right font-display font-semibold text-ink-900">$408.5M</td>
+                                <td class="py-3 px-4 md:px-6 text-right text-ink-500 hidden md:table-cell">5,272</td>
+                            </tr>
+                            <tr class="border-b border-black/[0.04] hover:bg-black/[0.015] transition-colors">
+                                <td class="py-3 px-4 md:px-6"><span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-warning-orange/15 text-warning-orange text-xs font-bold">3</span></td>
+                                <td class="py-3 px-4 md:px-6">
+                                    <a href="https://etherscan.io/address/0x1999ef52700c34de7ec2b68a28aafb37db0c5ade" target="_blank" class="font-mono text-xs md:text-sm text-accent-blue hover:underline">0x1999...c5ade</a>
+                                    <div class="text-xs text-warning-amber mt-0.5 md:hidden">Magomedov</div>
+                                </td>
+                                <td class="py-3 px-4 md:px-6 hidden md:table-cell"><span class="text-xs text-warning-amber bg-warning-amber/10 px-2 py-1 rounded">Magomedov</span></td>
+                                <td class="py-3 px-4 md:px-6 text-right font-display font-semibold text-ink-900">$410.0M</td>
+                                <td class="py-3 px-4 md:px-6 text-right text-ink-500 hidden md:table-cell">5,458</td>
+                            </tr>
+                            <!-- Top 3 Subtotal -->
+                            <tr class="border-b border-black/[0.06] bg-surface-50">
+                                <td class="py-2.5 px-4 md:px-6" colspan="2"><span class="text-xs text-ink-400 uppercase tracking-wider font-medium">Top 3 Subtotal</span></td>
+                                <td class="py-2.5 px-4 md:px-6 hidden md:table-cell"></td>
+                                <td class="py-2.5 px-4 md:px-6 text-right font-display font-bold text-ink-900">$1.30B</td>
+                                <td class="py-2.5 px-4 md:px-6 text-right font-medium text-ink-600 hidden md:table-cell">12,616</td>
+                            </tr>
+                            <!-- Top 10 Subtotal -->
+                            <tr class="border-b border-black/[0.06] bg-surface-50">
+                                <td class="py-2.5 px-4 md:px-6" colspan="2"><span class="text-xs text-ink-400 uppercase tracking-wider font-medium">Top 10 Subtotal</span></td>
+                                <td class="py-2.5 px-4 md:px-6 hidden md:table-cell"></td>
+                                <td class="py-2.5 px-4 md:px-6 text-right font-display font-bold text-ink-900">$2.25B</td>
+                                <td class="py-2.5 px-4 md:px-6 text-right font-medium text-ink-600 hidden md:table-cell">42,644</td>
+                            </tr>
+                            <!-- Grand Total -->
+                            <tr class="bg-surface-100">
+                                <td class="py-3 px-4 md:px-6" colspan="2"><span class="text-sm text-ink-900 uppercase tracking-wider font-semibold">Total (78 addresses)</span></td>
+                                <td class="py-3 px-4 md:px-6 hidden md:table-cell"></td>
+                                <td class="py-3 px-4 md:px-6 text-right font-display text-lg font-bold text-ink-900">$2.81B</td>
+                                <td class="py-3 px-4 md:px-6 text-right font-display font-bold text-ink-700 hidden md:table-cell">89,660</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="mt-16 text-center">
+            <div class="inline-flex items-center gap-2 text-ink-400 text-sm">
+                <i data-lucide="database" class="w-4 h-4"></i>
+                <span>Data sourced from Sanctions Tracker</span>
+                <span class="mx-2">|</span>
+                <span>Ethereum Mainnet</span>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>
